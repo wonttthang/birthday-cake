@@ -1308,8 +1308,13 @@ function paint(t, offY, fade, city) {
 }
 
 // @phase loop ─ 30 fps, pause and replay ───────────────────────────────────
-const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let t = reduce ? T_DONE : 0, lastNow = performance.now(), paused = false, fps = 30, statusAt = 0;
+let t = 0, lastNow = performance.now(), paused = false, fps = 30, statusAt = 0;
+let started = false;                             // the build-up waits until the cake is actually on screen
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.45) && !document.hidden) started = true;
+  }, { threshold: [0, 0.45, 0.8] }).observe(document.getElementById("scene"));
+} else started = true;
 let scene = "cake", cityT0 = 0, hintText = "";
 const hintEl = document.getElementById("hint");
 const statusEl = document.getElementById("status");
@@ -1320,7 +1325,7 @@ function tick(now) {
   lastNow = now;
   const dt = Math.min(0.1, real);
   fps = fps * 0.9 + 0.1 / Math.max(real, 1e-3);
-  if (!paused) t += dt;
+  if (!paused && started) t += dt;
   const d = paused ? 0 : dt;
   if (scene === "cake" && blowT >= 0 && t >= transAt() + TRANS_DUR) startCity();
   if (scene === "cake") {
