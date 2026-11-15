@@ -1114,8 +1114,12 @@ function textTargets() {
   const data = g.getImageData(0, 0, c.width, c.height).data;
   TEXT_TARGETS = [];
   for (let row = 0; row < 32; row++)
-    for (let col = 0; col < COLS; col++)
-      if (data[(Math.floor((row + 0.5) * CH) * c.width + Math.floor((col + 0.5) * CW)) * 4 + 3] > 110) TEXT_TARGETS.push([col, row + TEXT_TOP]);
+    for (let col = 0; col < COLS; col++) {
+      let hit = 0;                               // look at 16 points per cell so thin strokes (the bar of an H) are not missed
+      for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++)
+        if (data[((row * CH + 1 + sy * 3) * c.width + col * CW + 1 + sx * 2) * 4 + 3] > 110) hit++;
+      if (hit >= 3) TEXT_TARGETS.push([col, row + TEXT_TOP]);
+    }
   return TEXT_TARGETS;
 }
 function drawTextParticles(ct, t) {
