@@ -1,0 +1,1452 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:title" content="생일 축하해, SH!">
+<meta property="og:description" content="케이크 촛불을 끄면 홍콩 밤하늘에 불꽃놀이가 시작돼요.">
+<title>SH's Birthday Cake</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+  /* Layout: a party table. Pastel sky with drifting balloons and confetti, a big greeting, the dark
+     ASCII "screen" as the centrepiece, then a send-to-a-friend card. One festive light look. */
+  :root {
+    --party-a: #ffe6ee;
+    --party-b: #fff0da;
+    --party-c: #ece4ff;
+    --ink: #3b2342;
+    --ink-soft: #7a5f80;
+    --berry: #ff4f7b;
+    --gold: #f2b33d;
+    --paper: #ffffff;
+    --line: #f3c9d6;
+    --card: #0a0c14;
+    --edge: #1a1e2c;
+    --fg: #d8dae6;
+    --dim: #6b7090;
+    --amber: #ffb35c;
+    --cur: #141a2c;
+    --display: "Jua", "Gowun Dodum", system-ui, sans-serif;
+    --body: "Gowun Dodum", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+    color-scheme: light;
+  }
+  html, body { min-height: 100%; }
+  body {
+    background: linear-gradient(165deg, var(--party-a) 0%, var(--party-b) 48%, var(--party-c) 100%) fixed;
+    background-color: var(--party-a);
+    color: var(--ink);
+    font-family: var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 44px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    word-break: keep-all;
+  }
+  .sky { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .balloon {
+    position: absolute; left: var(--x); bottom: -140px;
+    width: 46px; height: 58px; border-radius: 50% 50% 48% 52% / 58% 58% 42% 42%;
+    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .75) 0 10%, transparent 11%), var(--c);
+    opacity: .85;
+    animation: rise var(--d) linear var(--s) infinite;
+  }
+  .balloon::after {
+    content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 70px;
+    background: linear-gradient(var(--ink-soft), transparent); opacity: .4;
+  }
+  @keyframes rise {
+    0% { transform: translate(0, 0) rotate(-4deg); }
+    50% { transform: translate(18px, -60vh) rotate(4deg); }
+    100% { transform: translate(-10px, -125vh) rotate(-3deg); }
+  }
+  .confetti {
+    position: absolute; left: var(--x); top: -20px; width: 8px; height: 13px; border-radius: 2px;
+    background: var(--c); opacity: .8;
+    animation: fall var(--d) linear var(--s) infinite;
+  }
+  @keyframes fall {
+    0% { transform: translate(0, 0) rotate(0); }
+    100% { transform: translate(40px, 110vh) rotate(720deg); }
+  }
+  .wrap { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .greet { text-align: center; display: flex; flex-direction: column; gap: 6px; max-width: 560px; }
+  .greet .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--berry); }
+  .greet h1 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 9vw, 58px); line-height: 1.08; margin: 0; text-wrap: balance; }
+  .greet h1 .name { color: var(--berry); }
+  .greet p { margin: 0; color: var(--ink-soft); font-size: 15.5px; line-height: 1.55; }
+  .card {
+    width: 100%; max-width: 560px;
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 0 0 6px var(--paper), 0 24px 60px rgba(120, 50, 110, .28);
+  }
+  canvas#scene { display: block; width: 100%; height: auto; aspect-ratio: 768 / 1008; max-width: 100%; cursor: pointer; background: #070912; }
+  .tabbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 8px 14px; border-top: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
+    font-family: var(--mono); font-size: 12px; color: var(--fg);
+  }
+  .tabbar .file { border-bottom: 2px solid #4a7dff; padding-bottom: 3px; }
+  .tabbar .status { color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .code { position: relative; height: calc(12 * 1.55em); overflow: hidden; font-family: var(--mono); font-size: clamp(9.5px, 2.5vw, 11.5px); line-height: 1.55; min-width: 0; }
+  .code .inner { transition: transform .35s ease; will-change: transform; }
+  .code .ln { display: flex; gap: 14px; padding: 0 14px; white-space: pre; overflow: hidden; }
+  .code .ln.cur { background: var(--cur); }
+  .code .no { color: #3b4058; min-width: 3ch; text-align: right; flex: none; }
+  .code .ln.cur .no { color: #8a90b0; }
+  .code .tx { color: #b7bbd0; overflow: hidden; text-overflow: clip; }
+  .k { color: #c792ea; } .s { color: #c3e88d; } .n { color: #f78c6c; } .c { color: #4f5672; font-style: italic; } .f { color: #82aaff; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .controls button, .linkrow button {
+    font-family: var(--body); font-size: 14px; cursor: pointer; border-radius: 999px; padding: 9px 18px;
+  }
+  .controls button { color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); }
+  .controls button:hover { border-color: var(--berry); }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--berry); outline-offset: 2px; }
+  .hint { color: var(--ink-soft); font-size: 13px; text-align: center; }
+  .share {
+    width: 100%; max-width: 560px; box-sizing: border-box;
+    background: var(--paper); border-radius: 18px; padding: 18px;
+    box-shadow: 0 14px 40px rgba(120, 50, 110, .14);
+    display: grid; gap: 12px;
+  }
+  .share h2 { font-family: var(--display); font-weight: 400; font-size: 23px; margin: 0; }
+  .share-body { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .qr { width: 132px; height: 132px; padding: 8px; border: 2px dashed var(--line); border-radius: 14px; flex: none; background: var(--paper); }
+  .qr img, .qr canvas { width: 100% !important; height: auto !important; display: block; }
+  .share-text { flex: 1 1 220px; min-width: 0; display: grid; gap: 10px; font-size: 14.5px; line-height: 1.55; }
+  .share-text p { margin: 0; }
+  .linkrow { display: flex; gap: 8px; }
+  .linkrow input {
+    flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; color: var(--ink);
+    padding: 9px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: #fffafc;
+  }
+  .linkrow button { color: #fff; background: var(--berry); border: none; white-space: nowrap; }
+  details { font-size: 13.5px; color: var(--ink-soft); }
+  summary { cursor: pointer; color: var(--ink); }
+  details p { margin: 6px 0 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .balloon, .confetti { animation: none; display: none; }
+    .code .inner { transition: none; }
+  }
+</style>
+
+<div class="sky" aria-hidden="true">
+  <span class="balloon" style="--x:4%;--c:#ff8fab;--d:19s;--s:-3s"></span>
+  <span class="balloon" style="--x:16%;--c:#ffd166;--d:23s;--s:-12s"></span>
+  <span class="balloon" style="--x:78%;--c:#a0c4ff;--d:21s;--s:-6s"></span>
+  <span class="balloon" style="--x:90%;--c:#ffadad;--d:17s;--s:-14s"></span>
+  <span class="balloon" style="--x:64%;--c:#cdb4db;--d:25s;--s:-19s"></span>
+  <span class="balloon" style="--x:30%;--c:#9be7c4;--d:27s;--s:-8s"></span>
+  <span class="confetti" style="--x:6%;--c:#ff4f7b;--d:9s;--s:-1s"></span>
+  <span class="confetti" style="--x:12%;--c:#f2b33d;--d:11s;--s:-6s"></span>
+  <span class="confetti" style="--x:21%;--c:#7bdff2;--d:10s;--s:-3s"></span>
+  <span class="confetti" style="--x:27%;--c:#b388eb;--d:12s;--s:-8s"></span>
+  <span class="confetti" style="--x:35%;--c:#ff8fab;--d:9.5s;--s:-5s"></span>
+  <span class="confetti" style="--x:43%;--c:#95e06c;--d:13s;--s:-2s"></span>
+  <span class="confetti" style="--x:52%;--c:#f2b33d;--d:10.5s;--s:-9s"></span>
+  <span class="confetti" style="--x:59%;--c:#ff4f7b;--d:12.5s;--s:-4s"></span>
+  <span class="confetti" style="--x:67%;--c:#7bdff2;--d:9s;--s:-7s"></span>
+  <span class="confetti" style="--x:74%;--c:#b388eb;--d:11.5s;--s:-1.5s"></span>
+  <span class="confetti" style="--x:82%;--c:#95e06c;--d:10s;--s:-6.5s"></span>
+  <span class="confetti" style="--x:88%;--c:#ff8fab;--d:13.5s;--s:-3.5s"></span>
+  <span class="confetti" style="--x:95%;--c:#f2b33d;--d:9.8s;--s:-8.5s"></span>
+</div>
+
+<div class="wrap">
+  <header class="greet">
+    <span class="eyebrow">made with code · just for you</span>
+    <h1>생일 축하해, <span class="name" id="greetName">SH</span>!</h1>
+    <p>케이크가 다 만들어지면 터치해서 촛불을 꺼 주세요.<br>홍콩 밤하늘에 불꽃놀이가 시작돼요.</p>
+  </header>
+  <div class="card">
+    <canvas id="scene" aria-label="ASCII strawberry birthday cake; blow out the candles to see fireworks over Victoria Harbour"></canvas>
+    <div class="tabbar">
+      <span class="file">birthday_cake.js</span>
+      <span class="status" id="status">● running · 30 fps</span>
+    </div>
+    <div class="code" id="code"><div class="inner" id="codeInner"></div></div>
+  </div>
+  <div class="controls">
+    <button id="btnPause" type="button">Pause</button>
+    <button id="btnReplay" type="button">Replay</button>
+    <button id="btnMusic" type="button" aria-pressed="false">♪ 노래 켜기</button>
+  </div>
+  <div class="hint" id="hint">Tap to pause · Space pause · R replay</div>
+  <section class="share" aria-labelledby="shareTitle">
+    <h2 id="shareTitle">친구에게 보내기</h2>
+    <div class="share-body">
+      <div class="qr" id="qr" role="img" aria-label="이 페이지 링크의 QR 코드"></div>
+      <div class="share-text">
+        <p>휴대폰 카메라로 QR 코드를 찍거나, 링크를 복사해서 카카오톡으로 보내 주세요.</p>
+        <div class="linkrow">
+          <input id="shareUrl" type="text" readonly aria-label="공유 링크">
+          <button id="btnCopy" type="button">링크 복사</button>
+        </div>
+        <details>
+          <summary>친구 폰에서 안 열리면?</summary>
+          <p>페이지 오른쪽 위 <b>Share</b> 메뉴에서 공개 범위를 <b>링크가 있는 모든 사람</b>으로 바꿔 주세요. 그러면 로그인 없이 바로 열려요.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+const SOURCE = document.currentScript.textContent;
+
+// @phase setup ─ grid, camera and light ──────────────────────────────────
+const COLS = 96, ROWS = 84, CW = 8, CH = 12;   // character grid (cells are 8×12 px)
+const ASP = CH / CW;                             // stretch x so circles stay round
+const PHI = 0.27, CP = Math.cos(PHI), SP = Math.sin(PHI);   // camera looks down 15.5°
+const SPIN = 0.42;                               // turntable speed (rad/s)
+const L = norm([-0.48, 0.55, 0.72]);             // key light: upper left, in front
+const HV = norm([L[0], L[1], L[2] + 1]);         // half vector for highlights
+const TIERS = [[1.70, 0.00, 0.55], [1.28, 0.55, 1.27], [0.86, 1.27, 1.95]];  // radius, bottom, top
+const PLATE = [1.95, -0.07, 0.0];
+const TOP_Y = TIERS[2][2];
+const CANDLE_H = 0.34, CANDLE_R = 0.46, NC = 5;
+const LIGHT_Y = TOP_Y + CANDLE_H + 0.1;          // where the candle light lives
+const RIDGES = [64, 48, 34], SCALLOPS = [14, 11, 8];
+const RAMP = " .:-=+*#%@";                       // one dark→bright rule for every surface
+const NAME = (/^#([A-Za-z0-9-]{1,12})$/.exec(location.hash) || [0, "SH"])[1];
+
+// timeline (seconds)
+const T_PLATE = 0.2, T_SCAN = 0.75, SCAN_V = 0.6;
+const T_DEC = T_SCAN + TOP_Y / SCAN_V + 0.25;
+const POP_GAP = 0.024, POP_DUR = 0.3, FLAME_GAP = 0.32, TITLE_GAP = 0.05, DIM_T = 2.2;
+
+function norm(v) { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function hsh(a, b, c) {
+  let h = (Math.imul(a | 0, 73856093) ^ Math.imul(b | 0, 19349663) ^ Math.imul(c | 0, 83492791)) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+// @phase materials ─ colour ramps (shadow → light) ─────────────────────────
+function ramp(stops) {
+  const lut = [];
+  for (let i = 0; i <= 64; i++) {
+    const t = i / 64;
+    let k = 0;
+    while (k < stops.length - 2 && t > stops[k + 1][0]) k++;
+    const a = stops[k], b = stops[k + 1], u = clamp((t - a[0]) / (b[0] - a[0]), 0, 1);
+    lut.push([a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u, a[3] + (b[3] - a[3]) * u]);
+  }
+  return lut;
+}
+const MAT = [
+  ramp([[0, 10, 12, 26], [0.2, 52, 56, 86], [0.4, 150, 152, 176], [0.6, 226, 227, 236], [0.8, 250, 250, 250], [1, 255, 255, 255]]), // 0 cream
+  ramp([[0, 26, 8, 20], [0.45, 170, 66, 104], [0.8, 255, 150, 186], [1, 255, 222, 232]]),   // 1 pink ribbon
+  ramp([[0, 36, 3, 10], [0.35, 130, 8, 26], [0.7, 226, 26, 48], [0.88, 255, 86, 92], [1, 255, 205, 200]]), // 2 strawberry
+  ramp([[0, 8, 26, 12], [0.5, 36, 124, 52], [1, 150, 240, 130]]),                           // 3 leaf
+  ramp([[0, 12, 14, 24], [0.5, 84, 92, 124], [1, 205, 214, 238]]),                           // 4 plate
+  ramp([[0, 10, 12, 22], [1, 92, 100, 138]]),                                              // 5 table
+  ramp([[0, 40, 30, 10], [1, 255, 216, 120]]),                                             // 6 seeds / gold
+];
+const WARM = [255, 150, 62];
+const styleCache = new Map();
+function mat(m, b, w) {
+  const bq = b <= 0 ? 0 : b >= 1 ? 64 : (b * 64) | 0;
+  const wq = w <= 0 ? 0 : w >= 1 ? 16 : (w * 16) | 0;
+  const key = m * 4096 + bq * 32 + wq;
+  let s = styleCache.get(key);
+  if (!s) {
+    const c = MAT[m][bq], k = wq / 16;
+    s = `rgb(${Math.min(255, c[0] + WARM[0] * k) | 0},${Math.min(255, c[1] + WARM[1] * k * 0.8) | 0},${Math.min(255, c[2] + WARM[2] * k * 0.5) | 0})`;
+    styleCache.set(key, s);
+  }
+  return s;
+}
+const rgbCache = new Map();
+function rgb(r, g, b) {
+  r = clamp(r | 0, 0, 255); g = clamp(g | 0, 0, 255); b = clamp(b | 0, 0, 255);
+  const key = ((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2);
+  let s = rgbCache.get(key);
+  if (!s) { s = `rgb(${r},${g},${b})`; rgbCache.set(key, s); }
+  return s;
+}
+function rampChar(b, h) {
+  const j = (h & 7) === 0 ? 0.7 : (h & 7) === 1 ? -0.7 : 0;   // tiny jitter so it feels hand-drawn
+  return RAMP[clamp(Math.floor(b * 9.6 + j), 0, 9)];
+}
+
+// @phase layout ─ fit the cake into the grid ──────────────────────────────
+const N = COLS * ROWS;
+const SCENE_BOTTOM = ROWS - 14;
+const yMax = (TOP_Y + CANDLE_H + 0.32) * CP + CANDLE_R * SP;
+const yMin = PLATE[1] * CP - PLATE[0] * SP;
+const SPAN = yMax - yMin;
+const S = Math.min((SCENE_BOTTOM - 8) / SPAN, (COLS * 0.95) / (2 * PLATE[0] * ASP));
+const CX = COLS / 2;
+const CY = 8 + ((SCENE_BOTTOM - 8) - SPAN * S) / 2 + yMax * S;
+const TITLE_ROW = SCENE_BOTTOM + 2;
+
+function project(x, y, z) { return [x, y * CP - z * SP, y * SP + z * CP]; }
+
+// @phase tiers ─ ray-cast every cell against the three cylinders ───────────
+// Done once: the cake is round, so turning it only moves the surface texture.
+function castTier(R, y0, y1, upperR, tier) {
+  const cells = { idx: [], part: [], ang: [], rad: [], y: [], dif: [], spec: [], ao: [], z: [], warm: [] };
+  const H = [HV[0], HV[1], HV[2]];
+  for (let row = 0; row < SCENE_BOTTOM + 2; row++) {
+    const Y = (CY - (row + 0.5)) / S;
+    for (let col = 0; col < COLS; col++) {
+      const X = (col + 0.5 - CX) / (S * ASP);
+      if (Math.abs(X) > R) continue;
+      let best = null;
+      let z = Math.sqrt(R * R - X * X);            // front of the side wall
+      let Z = (z + Y * SP) / CP, y = Y * CP + Z * SP;
+      if (y >= y0 && y <= y1) best = [Z, 0, X, y, z];
+      Z = (y1 - Y * CP) / SP; z = -Y * SP + Z * CP;  // flat top
+      if (X * X + z * z <= R * R && (!best || Z > best[0])) best = [Z, 1, X, y1, z];
+      if (!best) continue;
+      const [ZZ, part, x, yy, zz] = best;
+      const rad = Math.hypot(x, zz);
+      let n, nc;                                     // world normal, camera normal
+      if (part === 0) { n = [x / R, 0, zz / R]; nc = [n[0], -n[2] * SP, n[2] * CP]; }
+      else { n = [0, 1, 0]; nc = [0, CP, SP]; }
+      const dif = Math.max(0, nc[0] * L[0] + nc[1] * L[1] + nc[2] * L[2]);
+      const spec = Math.pow(Math.max(0, nc[0] * H[0] + nc[1] * H[1] + nc[2] * H[2]), 28);
+      let ao = 1;
+      if (part === 0) {
+        ao *= 0.5 + 0.5 * Math.sqrt(Math.max(0, nc[2]));          // edges turn away → darker
+        if (tier >= 0) ao *= 1 - 0.45 * Math.exp(-(yy - y0) / 0.05); // contact shadow at the base
+      } else if (upperR > 0 && rad > upperR) {
+        ao *= 1 - 0.6 * Math.exp(-(rad - upperR) / 0.07);           // shadow ring round the tier above
+      }
+      const v = [-x, LIGHT_Y - yy, -zz], d = Math.hypot(v[0], v[1], v[2]);
+      const nd = (n[0] * v[0] + n[1] * v[1] + n[2] * v[2]) / d;
+      const warm = Math.max(0, (nd + 0.3) / 1.3) / (1 + 0.42 * d * d);   // candle light, wrapped
+      cells.idx.push(row * COLS + col); cells.part.push(part); cells.ang.push(Math.atan2(zz, x));
+      cells.rad.push(rad); cells.y.push(yy); cells.dif.push(dif); cells.spec.push(spec);
+      cells.ao.push(ao); cells.z.push(ZZ); cells.warm.push(warm);
+    }
+  }
+  return cells;
+}
+const BODY = [castTier(PLATE[0], PLATE[1], PLATE[2], TIERS[0][0], -1)];
+TIERS.forEach(([R, y0, y1], i) => BODY.push(castTier(R, y0, y1, i < 2 ? TIERS[i + 1][0] : 0, i)));
+
+// @phase background ─ night sky and a dotted table ─────────────────────────
+const FLOOR = [], STARS = [];
+{
+  let seed = 7;
+  const rnd = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296);
+  for (let row = 0; row < SCENE_BOTTOM + 2; row++) {
+    const Y = (CY - (row + 0.5)) / S;
+    for (let col = 0; col < COLS; col++) {
+      const X = (col + 0.5 - CX) / (S * ASP);
+      const Z = (PLATE[1] - Y * CP) / SP, z = -Y * SP + Z * CP;
+      if (z > -4.2) {
+        let ch = "";
+        if (row % 2 === 0) ch = col % 3 === 0 ? "." : "";
+        else ch = col % 2 === 0 ? "-" : (col % 4 === 1 ? "." : "");
+        if (!ch) continue;
+        const far = clamp((z + 4.2) / 2.2, 0, 1);
+        const r = Math.hypot(X, z);
+        const ao = r < PLATE[0] + 0.5 ? 0.35 + 0.65 * clamp((r - PLATE[0]) / 0.5, 0, 1) : 1;
+        FLOOR.push([row * COLS + col, ch, (0.18 + 0.5 * far) * ao, Math.exp(-(X * X + z * z) / 3.2) * far * ao]);
+      } else if (row > 1 && rnd() < 0.045) {
+        STARS.push([row * COLS + col, rnd() * 6.3, 0.5 + rnd() * 2.2, rnd()]);
+      }
+    }
+  }
+}
+
+// @phase decor ─ strawberries, cream rosettes and piped beads ──────────────
+const SPRITES = [];
+let popT = T_DEC;
+TIERS.forEach(([R, y0, y1], i) => {
+  const nb = Math.floor((2 * Math.PI * R) / 0.12);
+  const beadT = T_SCAN + (y0 + 0.08) / SCAN_V;
+  for (let k = 0; k < nb; k++)
+    SPRITES.push({ r: R + 0.02, a: (2 * Math.PI * (k + 0.5 * i)) / nb, y: y0 + 0.045, rad: 0.056, ey: 0.9, kind: "bead", pop: beadT });
+});
+const RIM = [12, 9, 6];
+TIERS.forEach(([R, y0, y1], i) => {
+  const n = RIM[i] * 2, rr = R - 0.16;
+  for (let k = 0; k < n; k++) {
+    const a = (2 * Math.PI * k) / n;
+    if (k % 2 === 0) addBerry(rr, a, y1, 0.13, popT);
+    else SPRITES.push({ r: rr, a, y: y1 + 0.075, rad: 0.12, ey: 0.8, kind: "rose", pop: popT });
+    popT += POP_GAP;
+  }
+});
+popT += 0.1;
+for (let k = 0; k < 3; k++) { addBerry(0.14, (2 * Math.PI * k) / 3 + 0.5, TOP_Y, 0.1, popT); popT += 0.09; }
+function addBerry(r, a, y1, rad, pop) {
+  const yc = y1 + rad * 1.3 * 0.82;
+  SPRITES.push({ r, a, y: yc, rad, ey: 1.3, kind: "berry", pop });   // hulled, tip pointing up
+}
+const N_BERRIES = SPRITES.filter((s) => s.kind === "berry").length;
+const CANDLES = [[255, 122, 170], [116, 184, 255], [255, 210, 92], [140, 228, 160], [196, 150, 255]]
+  .map((c, k) => ({ a: (2 * Math.PI * k) / NC + 0.35, c }));
+const T_CANDLE = popT + 0.35, T_FLAME = T_CANDLE + 0.75;
+const TITLE = ("HAPPY BIRTHDAY " + NAME).split("").join(" ");
+const T_TITLE = T_FLAME + NC * FLAME_GAP + 0.3;
+const T_DONE = T_TITLE + TITLE.length * TITLE_GAP;
+const TITLE_STEP = 14.5;                         // px between letters of the big title
+let titleGlyphs = [];
+const DUST = [];                                 // gold dust cells around the title
+{
+  const half = (TITLE_STEP * (TITLE.length - 1)) / 2 / CW;
+  let seed = 31;
+  const rnd = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296);
+  while (DUST.length < 70) {
+    const col = Math.floor(CX + (rnd() * 2 - 1) * (half + 7));
+    const row = TITLE_ROW + Math.round((rnd() * 2 - 1) * 4);
+    if (Math.abs(row - TITLE_ROW) <= 1 && Math.abs(col + 0.5 - CX) <= half + 1.5) continue;
+    if (row > ROWS - 7 || col < 0 || col >= COLS) continue;
+    DUST.push([row * COLS + col, rnd() * 6.3, 0.8 + rnd() * 2.2]);
+  }
+}
+
+// gold glitter pressed into the cream
+const GLITTER = [];
+{
+  let seed = 99;
+  const rnd = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296);
+  TIERS.forEach(([R, y0, y1], i) => {
+    const inner = i < 2 ? TIERS[i + 1][0] : 0.3;
+    for (let k = 0; k < 26 * R; k++) {
+      if (rnd() < 0.5) GLITTER.push([Math.sqrt(inner * inner + rnd() * (R * R - inner * inner)) * 0.97, rnd() * 6.3, y1 + 0.004, 1, rnd() * 6.3, 0.6 + rnd() * 1.3]);
+      else GLITTER.push([R + 0.004, rnd() * 6.3, y0 + 0.06 + rnd() * (y1 - y0 - 0.12), 0, rnd() * 6.3, 0.6 + rnd() * 1.3]);
+    }
+  });
+}
+
+// @phase blow ─ tap, and the candles go out one by one ──────────────────────
+let blowT = -1, puffed = new Set();
+const OUT_GAP = 0.22, TRANS_DUR = 1.1;
+function outAt(k) { return blowT < 0 ? Infinity : blowT + 0.35 + k * OUT_GAP; }
+function isLit(k, t) { return t >= T_FLAME + k * FLAME_GAP && t < outAt(k); }
+function litCount(t) { let n = 0; for (let k = 0; k < NC; k++) if (isLit(k, t)) n++; return n; }
+function transAt() { return blowT + 0.35 + (NC - 1) * OUT_GAP + 1.9; }
+function smoke(x, y, z, big) {
+  parts.push({ x, y, z, vx: (Math.random() - 0.3) * (big ? 0.25 : 0.08), vy: 0.18 + Math.random() * 0.14, vz: (Math.random() - 0.5) * 0.05,
+    age: 0, life: 1.3 + Math.random() * 1.1, hot: [190, 190, 205], cold: [40, 42, 58], chars: big ? "@(~)'." : "(~)~'.", g: -0.03 });
+}
+
+// @phase render ─ one frame ────────────────────────────────────────────────
+const CHS = new Array(N), STY = new Array(N), ZB = new Float32Array(N), EM = new Float32Array(N);
+let parts = [], litDone = new Set(), lastScanSpark = 0;
+const confetti = Array.from({ length: 16 }, (_, k) => newConfetti(true, k));
+function newConfetti(initial, k = Math.random() * 100) {
+  const pal = [[255, 130, 170], [130, 200, 255], [255, 220, 120], [170, 240, 180], [210, 170, 255]];
+  return { x: (Math.random() * 2 - 1) * 2.4, y: initial ? 2.6 + Math.random() * 3 : 2.7, z: (Math.random() * 2 - 1) * 1.8,
+    v: 0.12 + Math.random() * 0.18, ph: Math.random() * 6.3, c: pal[(k | 0) % pal.length] };
+}
+function put(i, ch, sty, z, em) { CHS[i] = ch; STY[i] = sty; ZB[i] = z; EM[i] = em; }
+function dot(x, y, z, ch, sty, em) {
+  const [X, Y, Z] = project(x, y, z);
+  const col = Math.floor(CX + X * S * ASP), row = Math.floor(CY - Y * S);
+  if (row >= 0 && row < SCENE_BOTTOM + 2 && col >= 0 && col < COLS) {
+    const i = row * COLS + col;
+    if (Z > ZB[i]) put(i, ch, sty, Z, em);
+  }
+}
+let letters = 0, flames = [];
+
+function drawFrame(t, dt) {
+  CHS.fill(""); STY.fill(""); ZB.fill(-1e9); EM.fill(0);
+  const th = t * SPIN;
+  const lit = litCount(t);
+  const dim = clamp((t - T_TITLE) / DIM_T, 0, 1);
+  const out = blowT < 0 ? 0 : clamp((t - blowT - 0.35) / (NC * OUT_GAP + 0.6), 0, 1);
+  const bg = (1 - 0.55 * dim) * (1 - 0.35 * out);  // the room goes dark once every candle is lit…
+  const amb = (1 - 0.08 * dim) * (1 - 0.5 * out);  // …the cake stays bright until they are blown out
+  const fl = lit ? (lit / NC) * (0.86 + 0.08 * Math.sin(t * 11.3) * Math.sin(t * 6.7 + 1) + 0.05 * Math.sin(t * 2.1) + 0.06 * (Math.random() - 0.5)) : 0;
+  const scanY = t < T_SCAN ? -1 : (t - T_SCAN) * SCAN_V;
+  const scanning = scanY >= 0 && scanY < TOP_Y + 0.05;
+  letters = 0;
+  flames = [];
+
+  // sky + table
+  for (const [i, ph, sp, depth] of STARS) {
+    const b = (0.5 + 0.5 * Math.sin(t * sp + ph)) * (0.35 + 0.65 * depth) * (0.45 + 0.55 * bg);
+    if (b < 0.16) continue;
+    put(i, b > 0.62 && depth > 0.6 ? "+" : depth > 0.85 && b > 0.5 ? "*" : ".", rgb(150 * b + 40, 160 * b + 42, 210 * b + 50), -1e8, b > 0.6 ? b * 0.5 : 0);
+  }
+  for (const [i, ch, base, glow] of FLOOR) {
+    const w = glow * fl * 0.85;
+    put(i, ch, mat(5, base * bg + w * 0.9, w * 0.7), -1e8, w * 0.25);
+  }
+
+  // cake body
+  const plateIn = clamp((t - T_PLATE) / 0.45, 0, 1);
+  for (let tier = -1; tier < 3; tier++) {
+    const B = BODY[tier + 1];
+    if (tier < 0 && plateIn <= 0) continue;
+    const y1 = tier < 0 ? PLATE[2] : TIERS[tier][2];
+    const n = B.idx.length;
+    for (let k = 0; k < n; k++) {
+      const part = B.part[k], y = B.y[k];
+      if (tier >= 0 && (part === 0 ? y > scanY : y1 > scanY)) continue;
+      const i = B.idx[k], Z = B.z[k];
+      if (Z <= ZB[i]) continue;
+      const a = B.ang[k] - th, ao = B.ao[k], rad = B.rad[k];
+      const w = B.warm[k] * fl;
+      let b, m = 0, h, ch, em;
+      if (tier < 0) {
+        b = ((0.16 + 0.84 * B.dif[k]) * amb * ao * (part === 0 ? 0.8 : 0.62) + w * 0.6) * plateIn;
+        h = hsh(rad * 40 | 0, a * 9 | 0, 5);
+        m = 4;
+      } else if (part === 0) {
+        const tex = 0.9 + 0.1 * Math.cos(a * RIDGES[tier]);
+        b = (0.2 + 0.8 * B.dif[k]) * amb * ao * tex + B.spec[k] * 0.5 * amb * ao + w * 0.6 * ao;
+        h = hsh(Math.floor(a * TIERS[tier][0] * S * ASP * 0.9), Math.floor(y * S * CP), tier);
+        const sw = Math.abs(Math.sin(a * SCALLOPS[tier] * 0.5));
+        const d = y1 - 0.09 - 0.11 * sw;
+        const thr = 0.55 / (S * CP);
+        if (Math.abs(y - d) < thr) { m = 1; b = b * 0.95 + 0.08; ch = "~"; }
+        else if (sw < 0.1 && Math.abs(y - (y1 - 0.09)) < thr * 1.4) { m = 1; b = Math.min(1, b + 0.25); ch = "o"; }
+        if (scanning && scanY - y < 0.06) { put(i, "=", rgb(200, 240, 255), Z, 0.45); letters++; continue; }
+      } else {
+        const tex = 0.94 + 0.06 * Math.cos(rad * 42);
+        b = (0.2 + 0.8 * B.dif[k]) * amb * ao * tex + B.spec[k] * 0.35 * amb * ao + w * 0.6 * ao;
+        h = hsh(Math.floor(rad * Math.cos(a) * S * 1.4), Math.floor(rad * Math.sin(a) * S * 1.4), tier + 7);
+      }
+      if (!ch) ch = rampChar(b, h);
+      em = 0.06 * b + (b > 0.93 ? 0.12 : 0) + w * 0.15;
+      put(i, ch, mat(m, b, w * 0.9 * (m === 0 ? 0.55 : 0.4)), Z, em);
+      if (ch !== " ") letters++;
+    }
+  }
+
+  // the bright cut face while the cake is being "printed" from the bottom up
+  if (scanning) {
+    const tier = TIERS.findIndex(([, y0, y1]) => scanY >= y0 && scanY <= y1);
+    if (tier >= 0) {
+      const R = TIERS[tier][0];
+      const Y0 = scanY * CP, r0 = Math.floor(CY - (Y0 + R * SP) * S), r1 = Math.ceil(CY - (Y0 - R * SP) * S);
+      const c0 = Math.floor(CX - R * S * ASP), c1 = Math.ceil(CX + R * S * ASP);
+      for (let row = Math.max(0, r0); row <= Math.min(SCENE_BOTTOM, r1); row++) {
+        const Y = (CY - (row + 0.5)) / S;
+        for (let col = Math.max(0, c0); col <= Math.min(COLS - 1, c1); col++) {
+          const X = (col + 0.5 - CX) / (S * ASP);
+          const Z = (scanY - Y * CP) / SP, z = -Y * SP + Z * CP;
+          const rr = X * X + z * z;
+          if (rr > R * R) continue;
+          const i = row * COLS + col;
+          if (Z <= ZB[i]) continue;
+          const edge = Math.sqrt(rr) / R;
+          const hh = hsh(col, row, (t * 12) | 0);
+          put(i, edge > 0.9 ? "#" : "=-:."[hh & 3], rgb(120 + 100 * edge, 190 + 50 * edge, 235), Z, 0.08 + 0.3 * edge);
+          letters++;
+        }
+      }
+      if (t - lastScanSpark > 0.03) {
+        lastScanSpark = t;
+        const a = Math.random() * Math.PI;
+        parts.push({ x: R * Math.cos(a), y: scanY, z: R * Math.sin(a), vx: Math.cos(a) * 0.5, vy: 0.25 + Math.random() * 0.3, vz: Math.sin(a) * 0.5,
+          age: 0, life: 0.5 + Math.random() * 0.3, hot: [220, 250, 255], cold: [60, 120, 200], chars: "*+'.", g: 0.6 });
+      }
+    }
+  }
+
+  // strawberries, rosettes, beads
+  for (let s = 0; s < SPRITES.length; s++) {
+    const sp = SPRITES[s];
+    const u = (t - sp.pop) / POP_DUR;
+    if (u <= 0) continue;
+    const scale = u >= 1 ? 1 : u * (1 + 0.4 * Math.sin(Math.PI * u));
+    const wa = sp.a + th;
+    const [X, Y, Z] = project(sp.r * Math.cos(wa), sp.y, sp.r * Math.sin(wa));
+    const d2 = sp.r * sp.r + (sp.y - LIGHT_Y) ** 2;
+    letters += sprite(sp, X, Y, Z, sp.rad * scale, fl / (1 + 0.42 * d2) * (sp.y > TOP_Y - 0.01 ? 1 : 0.7), amb, s);
+  }
+
+  // candles + flames
+  CANDLES.forEach((cd, k) => {
+    const grow = clamp((t - T_CANDLE - k * 0.08) / 0.45, 0, 1);
+    if (grow > 0) letters += candle(cd, k, cd.a + th, grow, isLit(k, t), t, amb, fl);
+  });
+
+  // glitter
+  if (t >= T_TITLE) {
+    const fade = clamp((t - T_TITLE) / 1.5, 0, 1);
+    for (const [r, al, y, top, ph, sp] of GLITTER) {
+      const s = Math.sin(t * sp + ph) * fade;
+      if (s < 0.6) continue;
+      const wa = al + th;
+      if (!top && Math.sin(wa) < 0.12) continue;
+      const [X, Y, Z] = project(r * Math.cos(wa), y, r * Math.sin(wa));
+      const col = Math.floor(CX + X * S * ASP), row = Math.floor(CY - Y * S);
+      if (row < 0 || col < 0 || col >= COLS || row > SCENE_BOTTOM) continue;
+      const i = row * COLS + col, q = (s - 0.6) / 0.4;
+      if (Z + 0.05 > ZB[i]) put(i, q > 0.65 ? "*" : q > 0.3 ? "+" : ".", rgb(255, 214 + 30 * q, 110 + 120 * q), Z + 0.05, 0.5 + 0.5 * q);
+    }
+  }
+
+  // sparks and confetti
+  parts = parts.filter((p) => {
+    p.age += dt;
+    if (p.age >= p.life) return false;
+    p.vy -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+    const f = 1 - p.age / p.life;
+    const c = p.cold.map((v, j) => v + (p.hot[j] - v) * f);
+    dot(p.x, p.y, p.z, p.chars[Math.min(p.chars.length - 1, Math.floor((1 - f) * p.chars.length))], rgb(c[0], c[1], c[2]), 0.6 * f);
+    return true;
+  });
+  if (t >= T_TITLE) {
+    for (const c of confetti) {
+      c.y -= c.v * dt;
+      c.x += 0.1 * Math.sin(t * 1.2 + c.ph) * dt;
+      if (c.y < PLATE[1]) Object.assign(c, newConfetti(false));
+      const k = 0.5 + 0.5 * bg;
+      dot(c.x, c.y, c.z, "*+x'.o"[Math.floor(t * 4 + c.ph * 3) % 6], rgb(c.c[0] * k, c.c[1] * k, c.c[2] * k), 0.15);
+    }
+  }
+
+  drawHud(t, th);
+}
+
+function sprite(sp, X, Y, Z, rad, warm, amb, sid) {
+  const sx = CX + X * S * ASP, sy = CY - Y * S;
+  const rx = Math.max(0.8, rad * S * ASP), ry = Math.max(0.6, rad * sp.ey * S);
+  let drawn = 0;
+  const r0 = Math.max(0, Math.floor(sy - ry)), r1 = Math.min(SCENE_BOTTOM, Math.floor(sy + ry));
+  const c0 = Math.max(0, Math.floor(sx - rx)), c1 = Math.min(COLS - 1, Math.floor(sx + rx));
+  for (let row = r0; row <= r1; row++) {
+    const dy = (sy - (row + 0.5)) / ry;
+    for (let col = c0; col <= c1; col++) {
+      let dx = (col + 0.5 - sx) / rx;
+      if (sp.kind === "berry") dx /= 0.6 + 0.2 * (1 - dy);      // round shoulders below, pointed tip on top
+      const q = dx * dx + dy * dy;
+      if (q > 1) continue;
+      const nz = Math.sqrt(1 - q);
+      const z = Z + nz * rad, i = row * COLS + col;
+      if (z <= ZB[i]) continue;
+      const d = Math.max(0, dx * L[0] + dy * L[1] + nz * L[2]);
+      const spec = Math.pow(Math.max(0, dx * HV[0] + dy * HV[1] + nz * HV[2]), 22);
+      let b = (0.16 + 0.84 * d) * amb + warm * 0.7;
+      const h = hsh(col, row, sid);
+      let ch, sty, em = 0.05;
+      if (sp.kind === "berry") {
+        b = b * 0.85 + spec * 0.6 * amb;
+        if (h % 6 === 0 && nz > 0.35) { ch = h & 8 ? "'" : ","; sty = mat(6, 0.55 + 0.45 * b, warm * 0.2); }
+        else { ch = rampChar(0.35 + 0.65 * b, h); sty = mat(2, b, warm * 0.25); }
+        em = spec * 0.5 + 0.04;
+      } else if (sp.kind === "leaf") {
+        ch = "v^w*"[h & 3]; sty = mat(3, 0.3 + 0.7 * b, warm * 0.2);
+      } else {
+        if (sp.kind === "rose") b *= 0.82 + 0.18 * Math.sin(Math.atan2(dy, dx) * 3 + Math.sqrt(q) * 9);
+        b += spec * 0.35 * amb;
+        ch = rampChar(b, h); sty = mat(0, b, warm * 0.5);
+        em = 0.05 * b + (b > 0.93 ? 0.1 : 0);
+      }
+      if (ch === " ") ch = ".";
+      put(i, ch, sty, z, em);
+      drawn++;
+    }
+  }
+  return drawn;
+}
+
+// @phase candles ─ rise, then light one by one ─────────────────────────────
+function candle(cd, k, wa, grow, lit, t, amb, fl) {
+  const xw = CANDLE_R * Math.cos(wa), zw = CANDLE_R * Math.sin(wa);
+  const [X, Yb] = project(xw, TOP_Y, zw);
+  const Yt = (TOP_Y + CANDLE_H * grow) * CP - zw * SP;
+  const sx = CX + X * S * ASP, rowT = Math.floor(CY - Yt * S), rowB = Math.floor(CY - Yb * S);
+  const wc = Math.max(2, Math.round(0.075 * S * ASP));
+  const c0 = Math.floor(sx - wc / 2 + 0.5);
+  let drawn = 0;
+  for (let row = rowT; row <= rowB; row++) {
+    if (row < 0 || row > SCENE_BOTTOM) continue;
+    const yobj = ((CY - (row + 0.5)) / S + zw * SP) / CP;
+    const Z = yobj * SP + zw * CP + 0.06;
+    for (let c = c0; c < c0 + wc; c++) {
+      if (c < 0 || c >= COLS) continue;
+      const i = row * COLS + c;
+      if (Z <= ZB[i]) continue;
+      const u = ((c - c0 + 0.5) / wc) * 2 - 1;
+      const stripe = Math.floor((yobj - TOP_Y) * 20 + u * 1.3 + wa * 1.6) & 1;
+      const base = stripe ? cd.c : [250, 244, 250];
+      const b = (0.95 - 0.4 * (u + 1) / 2) * (0.45 + 0.55 * amb) + fl * 0.3;
+      put(i, Math.abs(u) > 0.55 ? "|" : "#", rgb(base[0] * b, base[1] * b, base[2] * b), Z, 0.05);
+      drawn++;
+    }
+  }
+  if (!lit) {
+    const since = t - outAt(k);
+    if (since >= 0 && since < 2.6) {                     // blown out: a puff, then a thin trail of smoke
+      const wy = TOP_Y + CANDLE_H + 0.06;
+      if (!puffed.has(k)) { puffed.add(k); for (let j = 0; j < 6; j++) smoke(xw, wy, zw, true); }
+      if (Math.random() < 0.5 * (1 - since / 2.6)) smoke(xw, wy, zw, false);
+      if (since < 1 && rowT - 1 >= 0) put((rowT - 1) * COLS + Math.floor(sx), ".", rgb(255, 120 - 60 * since, 40), 1e6, 0.6 * (1 - since));
+    }
+    return drawn;
+  }
+  if (!litDone.has(k)) {
+    litDone.add(k);
+    for (let j = 0; j < 9; j++) {
+      const a = Math.random() * 6.3;
+      parts.push({ x: xw, y: TOP_Y + CANDLE_H + 0.1, z: zw, vx: Math.cos(a) * 0.3, vy: 0.4 + Math.random() * 0.4, vz: Math.sin(a) * 0.3,
+        age: 0, life: 0.5 + Math.random() * 0.4, hot: [255, 246, 200], cold: [255, 130, 40], chars: "*+'.", g: 0.8 });
+    }
+  }
+  const fx = Math.floor(sx), Zf = (TOP_Y + CANDLE_H) * SP + zw * CP + 0.08;
+  const lean = blowT >= 0 && t >= blowT ? (t - blowT > 0.15 ? 2 : 1) : 0;   // the gust bends the flame
+  const sway = lean || (Math.sin(t * 9 + k * 2) > 0.6 ? 1 : Math.sin(t * 7 + k) < -0.7 ? -1 : 0);
+  const tall = S > 12 ? 4 : 3;
+  const shape = [
+    [rowT - 1, fx, "@0"[(t * 10 + k) & 1], [255, 252, 225], 1.0],
+    [rowT - 2, fx + (lean > 1 ? 1 : 0), "A8"[(t * 7 + k) & 1], [255, 214, 110], 0.95],
+    [rowT - 3, fx + sway, "^*"[(t * 9 + k) & 1], [255, 150, 50], 0.8],
+  ];
+  if (tall === 4) shape.push([rowT - 4, fx + sway, "'`"[(t * 5 + k) & 1], [255, 110, 40], 0.5]);
+  if (wc > 2) shape.push([rowT - 1, fx - 1, "(", [255, 196, 90], 0.7], [rowT - 1, fx + 1, ")", [255, 196, 90], 0.7]);
+  for (const [row, c, ch, col, em] of shape) {
+    if (row < 0 || c < 0 || c >= COLS) continue;
+    const i = row * COLS + c;
+    if (Zf > ZB[i]) { put(i, ch, rgb(col[0], col[1], col[2]), Zf, em); drawn++; }
+  }
+  flames.push([fx + 0.5, rowT - 1.5, Zf]);
+  if (Math.random() < 0.18)
+    parts.push({ x: xw, y: TOP_Y + CANDLE_H + 0.16, z: zw, vx: (Math.random() - 0.5) * 0.1, vy: 0.3, vz: 0,
+      age: 0, life: 0.5 + Math.random() * 0.5, hot: [255, 240, 190], cold: [255, 120, 40], chars: "*''.", g: 0 });
+  return drawn;
+}
+
+// @phase light ─ title, timer and stats while the room dims ──────────────
+function drawHud(t, th) {
+  const text = (row, col, str, sty, em = 0) => {
+    for (let j = 0; j < str.length; j++) {
+      const c = col + j;
+      if (c >= 0 && c < COLS && str[j] !== " ") put(row * COLS + c, str[j], sty, 1e9, em);
+    }
+  };
+  // title types itself in, one letter at a time, colours drifting (painted large in paint())
+  titleGlyphs = [];
+  if (t >= T_TITLE) {
+    const x0 = (W - TITLE_STEP * (TITLE.length - 1)) / 2;
+    for (let j = 0; j < TITLE.length; j++) {
+      if (TITLE[j] === " " || t < T_TITLE + j * TITLE_GAP) continue;
+      const hue = (t * 0.08 + j * 0.03) % 1, wave = 0.5 + 0.5 * Math.sin(t * 2.4 - j * 0.35);
+      const [r, g, b] = hsv(hue, 0.35 + 0.3 * wave, 0.8 + 0.2 * wave);
+      const pop = clamp((t - T_TITLE - j * TITLE_GAP) / 0.25, 0, 1);
+      titleGlyphs.push([TITLE[j], x0 + j * TITLE_STEP, (TITLE_ROW + 0.5) * CH - (1 - pop) * 8, rgb(r, g, b), pop]);
+    }
+    // gold dust sprinkled round the title
+    const fade = clamp((t - T_TITLE) / 1.2, 0, 1);
+    for (const [i, ph, sp] of DUST) {
+      const s = Math.sin(t * sp + ph) * fade;
+      if (s < 0.3) continue;
+      const q = (s - 0.3) / 0.7;
+      put(i, q > 0.7 ? "*" : q > 0.35 ? "+" : ".", rgb(255, 205 + 45 * q, 100 + 130 * q), 1e9, 0.35 + 0.6 * q);
+    }
+  }
+  if (blowT < 0 && t >= T_DONE + 0.8) {                   // invite the tap
+    const msg = "tap the cake to blow out the candles", k = 0.55 + 0.45 * Math.sin(t * 3);
+    text(TITLE_ROW + 3, Math.floor((COLS - msg.length) / 2), msg, rgb(255 * k, 190 * k, 110 * k), 0.3 * k);
+  }
+  const tt = `t ${t.toFixed(2).padStart(5, "0")}s`;
+  text(1, COLS - tt.length - 2, tt, "rgb(150,155,182)");
+  text(1, COLS - tt.length - 4, "●", "rgb(255,176,64)", 0.4);
+  const built = Math.min(100, Math.floor((100 * t) / T_DONE));
+  const deg = (((th * 180) / Math.PI) % 360).toFixed(2).padStart(6, " ");
+  text(ROWS - 6, 2, `for ${NAME}`, "rgb(140,146,176)");
+  text(ROWS - 4, 2, `rotation ${deg}°   candles ${NC}   strawberries ${N_BERRIES}`, "rgb(96,102,132)");
+  text(ROWS - 3, 2, `letters ${letters.toLocaleString("en-US")}   built ${String(built).padStart(3, " ")}%`, "rgb(96,102,132)");
+}
+function hsv(h, s, v) {
+  const i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), u = v * (1 - (1 - f) * s);
+  const m = [[v, u, p], [q, v, p], [p, v, u], [p, q, v], [u, p, v], [v, p, q]][i % 6];
+  return [m[0] * 255, m[1] * 255, m[2] * 255];
+}
+
+// @phase city ─ Victoria Harbour, seen from Tsim Sha Tsui ──────────────────
+const WL = 58, WATER_END = ROWS - 8;             // waterline row, last row of water
+const CR = new Uint8Array(N), CG = new Uint8Array(N), CB = new Uint8Array(N);
+function putC(i, ch, r, g, b, z, em) {
+  if (z <= ZB[i]) return;
+  r = clamp(r | 0, 0, 255); g = clamp(g | 0, 0, 255); b = clamp(b | 0, 0, 255);
+  CHS[i] = ch; ZB[i] = z; EM[i] = em; CR[i] = r; CG[i] = g; CB[i] = b; STY[i] = rgb(r, g, b);
+}
+function hudText(row, col, str, sty, em = 0) {
+  for (let j = 0; j < str.length; j++) if (col + j >= 0 && col + j < COLS && str[j] !== " ") put(row * COLS + col + j, str[j], sty, 1e9, em);
+}
+const RIDGE = Array.from({ length: COLS }, (_, c) => Math.round(WL - 11 - 15 * Math.exp(-(((c - 64) / 18) ** 2)) - 8 * Math.exp(-(((c - 14) / 12) ** 2)) - 1.2 * Math.sin(c * 0.7) - 0.8 * Math.sin(c * 1.9)));
+const NEON = [[255, 60, 120], [60, 230, 255], [255, 210, 60], [120, 255, 140], [200, 110, 255]];
+// kinds: 0 wall · 1 window · 2 roof/edge · 3 running neon · 4 X-frame · 5 mast · 6 crown · 7 side wall · 8 side window · 9 porthole · 10 sign · 12 white roof
+const CITY = [];                                 // [cell, kind, char, r, g, b, phase, col, row, z, layer]
+{
+  let seed = 2026;
+  const rnd = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822519) + 0x9e3779b9 >>> 0) / 4294967296);
+  const grid = new Map();
+  const set = (col, row, rec) => { if (col >= 0 && col < COLS && row >= 0 && row < WL) grid.set(row * COLS + col, rec); };
+  const win = (warm) => (warm ? [255, 200, 130] : [190, 215, 255]);
+
+  // far: apartment blocks climbing the Peak, hazy
+  for (let c = 1; c < COLS - 2; c += 2 + ((rnd() * 2) | 0)) {
+    const t0 = RIDGE[c] + 1 + ((rnd() * 5) | 0), h = 3 + ((rnd() * 6) | 0);
+    for (let col = c; col < c + 2; col++)
+      for (let row = t0; row < t0 + h; row++)
+        set(col, row, { layer: 0, kind: rnd() < 0.4 ? 1 : 0, ch: ".", rgb: [150, 170, 215] });
+  }
+  // a box with a lit front, a darker receding side and a roofline: this is what gives the towers depth
+  function box(b) {
+    const sd = b.side ?? (b.layer === 2 ? 2 : 1);
+    const topAt = b.topAt || (() => b.top);
+    for (let col = b.x0; col <= b.x1; col++) {
+      const top = topAt(col);
+      for (let row = top; row < WL; row++) {
+        const u = col - b.x0, v = row - top;
+        let rec = null;
+        if (b.facade) rec = b.facade(u, v, col, row, top);
+        if (!rec) {
+          if (row === top) rec = { kind: 2, ch: "_" };
+          else if (col === b.x0) rec = { kind: 2, ch: "|" };
+          else if (u % 2 === 1 && v % 2 === 1 && rnd() < 0.55) rec = { kind: 1, ch: ":", rgb: win(b.warm) };
+          else rec = { kind: 0, ch: (col + row) % 2 ? ":" : "." };
+        }
+        set(col, row, Object.assign({ layer: b.layer, z: b.z }, rec));
+      }
+      if (b.mast && b.mast.col === col) for (let row = top - b.mast.h; row < top; row++) set(col, row, { layer: b.layer, z: b.z, kind: 5, ch: "|" });
+    }
+    const rt = topAt(b.x1);
+    for (let k = 1; k <= sd; k++) {
+      const col = b.x1 + k, top = rt + k;
+      for (let row = top; row < WL; row++)
+        set(col, row, { layer: b.layer, z: b.z - 0.01, kind: row === top ? 2 : (row - top) % 2 === 1 && rnd() < 0.35 ? 8 : 7, ch: row === top ? "\\" : ":", rgb: win(b.warm) });
+    }
+    if (b.sign) {                                  // rooftop neon sign, the Hong Kong way
+      const s = b.sign;
+      for (let row = rt - 2; row < rt; row++) for (let col = b.x0; col <= Math.min(b.x1, b.x0 + 3); col++)
+        set(col, row, { layer: b.layer, z: b.z, kind: 10, ch: row === rt - 2 ? "=" : "#", rgb: NEON[s % NEON.length], sign: s });
+    }
+  }
+  // back row
+  for (let c = 0; c < COLS;) {
+    const w = 3 + ((rnd() * 3) | 0);
+    box({ x0: c, x1: Math.min(COLS - 1, c + w - 1), top: WL - 13 - ((rnd() * 14) | 0), layer: 1, z: 0.8, warm: rnd() < 0.5 });
+    c += w + 1;
+  }
+  // front row of ordinary towers
+  for (let c = 0; c < COLS;) {
+    const w = 4 + ((rnd() * 4) | 0);
+    box({ x0: c, x1: Math.min(COLS - 1, c + w - 1), top: WL - 6 - ((rnd() * 11) | 0), layer: 2, z: 1, warm: rnd() < 0.6, sign: rnd() < 0.35 ? (rnd() * 5) | 0 : undefined });
+    c += w + 2;
+  }
+  // the landmarks, left to right as seen across the water
+  box({ x0: 18, x1: 24, top: WL - 46, layer: 2, z: 2, mast: { col: 21, h: 3 },                     // Two IFC
+    topAt: (col) => WL - 46 + [12, 5, 2, 0, 2, 5, 12][col - 18],
+    facade: (u, v, col, row, top) => row - top < 3 && u > 1 && u < 5 ? { kind: 6, ch: "|" } : u % 2 === 1 && v > 0 ? { kind: 1, ch: ":", rgb: [205, 225, 255] } : null });
+  box({ x0: 28, x1: 32, top: WL - 20, layer: 2, z: 2,                                              // Jardine House, round windows
+    facade: (u, v) => v > 0 && u % 2 === 0 && v % 2 === 1 ? { kind: 9, ch: "o", rgb: [255, 236, 200] } : null });
+  box({ x0: 35, x1: 39, top: WL - 30, layer: 2, z: 2,                                              // Cheung Kong Center
+    facade: (u, v) => v > 0 && u % 2 === 0 && v % 2 === 0 ? { kind: 1, ch: "+", rgb: [225, 232, 248] } : null });
+  box({ x0: 42, x1: 46, top: WL - 23, layer: 2, z: 2,                                              // HSBC, coat-hanger frame
+    facade: (u, v) => v > 0 && v % 6 === 0 ? { kind: 2, ch: "=" } : u === 0 || u === 4 ? { kind: 5, ch: "|" } : v > 0 && rnd() < 0.5 ? { kind: 1, ch: ".", rgb: [255, 220, 170] } : null });
+  box({ x0: 49, x1: 57, top: WL - 40, layer: 2, z: 2, mast: { col: 51, h: 5 },                     // Bank of China Tower
+    topAt: (col) => WL - 40 + Math.round(Math.abs(col - 51) * 1.5),
+    facade: (u, v, col, row, top) => {
+      const w = row - (WL - 40), a = (u + w * 0.8) % 5, d = (((u - w * 0.8) % 5) + 5) % 5;
+      if (row === top) return { kind: 2, ch: "^" };
+      return a < 0.7 || d < 0.7 ? { kind: 4, ch: a < 0.7 ? "/" : "\\" } : rnd() < 0.2 ? { kind: 1, ch: ".", rgb: [170, 200, 255] } : null;
+    } });
+  box({ x0: 60, x1: 63, top: WL - 28, layer: 2, z: 2,                                              // The Center, running neon bands
+    facade: (u, v) => v > 0 && v % 3 === 0 ? { kind: 3, ch: "=" } : null });
+  box({ x0: 66, x1: 71, top: WL - 34, layer: 2, z: 2, mast: { col: 68, h: 5 },                     // Central Plaza
+    topAt: (col) => WL - 34 + Math.round(Math.abs(col - 68.5) * 1.4),
+    facade: (u, v, col, row, top) => row - (WL - 34) < 7 ? { kind: 3, ch: "#" } : rnd() < 0.5 ? { kind: 1, ch: ":", rgb: [255, 205, 140] } : null });
+  box({ x0: 74, x1: 89, top: WL - 6, layer: 2, z: 2.1, side: 1,                                    // Convention Centre, wing roof
+    topAt: (col) => WL - 5 - Math.round(1.8 * Math.sin((Math.PI * (col - 74)) / 15)),
+    facade: (u, v) => v === 0 ? { kind: 12, ch: u % 3 ? "-" : "~" } : { kind: 1, ch: v % 2 ? ":" : ".", rgb: [255, 214, 150] } });
+
+  for (const [i, c] of grid) {
+    const rgb0 = c.rgb || [0, 0, 0];
+    CITY.push([i, c.kind, c.ch, rgb0[0], rgb0[1], rgb0[2], rnd(), i % COLS, (i / COLS) | 0, c.layer === 0 ? 0.3 : c.z, c.layer, c.sign ?? 0]);
+  }
+}
+
+function drawCity(ct, dt, t) {
+  CHS.fill(""); STY.fill(""); ZB.fill(-1e9); EM.fill(0); CR.fill(0); CG.fill(0); CB.fill(0);
+  titleGlyphs = []; flames = [];
+  FW.flash *= Math.exp(-dt * 4.5);
+  const fl = FW.flash, fc = FW.flashC;
+  for (const [i, ph, sp, depth] of STARS) {                 // a few stars survive the city glow
+    if (((i / COLS) | 0) > WL - 24 || depth < 0.45) continue;
+    const b = (0.5 + 0.5 * Math.sin(t * sp + ph)) * depth * 0.7;
+    if (b > 0.18) putC(i, b > 0.5 ? "+" : ".", 150 * b + 30, 160 * b + 32, 210 * b + 40, -1e8, b > 0.5 ? 0.3 : 0);
+  }
+  for (let col = 0; col < COLS; col++) {                    // Victoria Peak behind the towers
+    for (let row = RIDGE[col]; row < WL; row++) {
+      const i = row * COLS + col;
+      if (row === RIDGE[col]) putC(i, RIDGE[col - 1] > row ? "/" : RIDGE[col + 1] > row ? "\\" : "_", 50 + fc[0] * fl * 0.2, 56 + fc[1] * fl * 0.2, 90 + fc[2] * fl * 0.2, 0.2, 0);
+      else if ((col * 7 + row * 3) % 5 === 0) putC(i, ".", 22, 26, 44, 0.2, 0);
+    }
+  }
+  if (Math.sin(ct * 2) > -0.3) putC((RIDGE[64] - 1) * COLS + 64, "o", 255, 210, 150, 0.6, 0.5);
+  if (ct > 2.4) {                                           // searchlights sweeping from the rooftops
+    const fade = clamp((ct - 2.4) / 1.5, 0, 1);
+    [[21.5, WL - 49, 0], [51.5, WL - 45, 1], [68.5, WL - 39, 2], [61.5, WL - 28, 3]].forEach(([bx, by, k]) => {
+      const ang = -Math.PI / 2 + 0.55 * Math.sin(ct * 0.45 + k * 1.7), c = k % 2 ? [90, 255, 170] : [120, 170, 255];
+      for (let s = 2; s < 60; s += 0.8) {
+        const x = bx + Math.cos(ang) * s * ASP, y = by + Math.sin(ang) * s;
+        if (y < 0 || x < 0 || x >= COLS) break;
+        const a = fade * (1 - s / 60) * 0.55;
+        putC((y | 0) * COLS + (x | 0), ".", c[0] * a, c[1] * a, c[2] * a, 0.15, a * 0.6);
+      }
+    });
+  }
+  const haze = [0.45, 0.7, 1];                              // farther = dimmer and bluer
+  for (const [i, kind, ch, r, g, b, ph, col, row, z, layer, sign] of CITY) {
+    const on = clamp((ct - 0.5 - col * 0.02 - ph * 0.4) / 0.25, 0, 1);     // windows switch on, left to right
+    const hz = haze[layer];
+    let rr = 22 + 10 * hz, gg = 26 + 10 * hz, bb = 46 + 14 * hz, em = 0, c = ch;
+    if (kind === 1 || kind === 8 || kind === 9) {
+      const lit = on * (ph > 0.06 || Math.sin(t * 0.3 + ph * 50) > 0 ? 1 : 0) * (0.75 + 0.25 * Math.sin(t * (0.5 + ph) + ph * 20)) * (kind === 8 ? 0.45 : 1) * hz;
+      if (lit > 0.05) { rr = r * lit + 18 * (1 - hz); gg = g * lit + 22 * (1 - hz); bb = b * lit + 40 * (1 - hz); em = 0.2 * lit; } else c = ".";
+    } else if (kind === 2) { rr = 70 * hz + 20; gg = 80 * hz + 22; bb = 120 * hz + 40; }
+    else if (kind === 7) { rr *= 0.7; gg *= 0.7; bb *= 0.75; }
+    else if (kind === 3) { const h = hsv((t * 0.12 + row * 0.03 + col * 0.01) % 1, 0.7, 1); rr = 26 + h[0] * on; gg = 30 + h[1] * on; bb = 52 + h[2] * on; em = 0.45 * on; }
+    else if (kind === 4) { rr = 30 + 225 * on; gg = 30 + 235 * on; bb = 50 + 205 * on; em = 0.35 * on; }
+    else if (kind === 5) { rr = 140; gg = 150; bb = 180; }
+    else if (kind === 6) { rr = 40 + 200 * on; gg = 40 + 220 * on; bb = 60 + 195 * on; em = 0.45 * on; }
+    else if (kind === 10) { const blink = Math.sin(t * (1.5 + sign * 0.4) + sign) > -0.6 ? 1 : 0.25; rr = r * on * blink; gg = g * on * blink; bb = b * on * blink; em = 0.5 * on * blink; }
+    else if (kind === 12) { rr = 40 + 210 * on; gg = 40 + 215 * on; bb = 60 + 190 * on; em = 0.3 * on; }
+    if (kind === 0 || kind === 2 || kind === 7) {           // bursts light up the walls
+      const k = fl * 0.25 * hz;
+      rr += fc[0] * k; gg += fc[1] * k; bb += fc[2] * k;
+    }
+    putC(i, c, rr, gg, bb, z, em);
+  }
+  updateFireworks(ct, dt, t);
+  drawTextParticles(ct, t);
+  for (let row = WL; row < WATER_END; row++) {              // the harbour mirrors everything above it
+    const d = row - WL, src = WL - 1 - Math.floor(d * 1.25), fade = 1 - (d / (WATER_END - WL)) * 0.65;
+    const wob = Math.round(Math.sin(t * 2.1 + row * 0.9) * 1.3 + Math.sin(t * 0.9 + row * 0.4) * 0.8);
+    for (let col = 0; col < COLS; col++) {
+      const i = row * COLS + col, sc = col + wob;
+      if (src >= 0 && sc >= 0 && sc < COLS) {
+        const s = src * COLS + sc, lum = (CR[s] + CG[s] + CB[s]) / 765;
+        if (CHS[s] && lum > 0.14 && hsh(col, row, (t * 6) | 0) % 4 !== 0) {
+          const k = fade * 0.55;
+          putC(i, lum > 0.45 ? "~" : lum > 0.25 ? "-" : ".", CR[s] * k, CG[s] * k * 1.05, CB[s] * k * 1.25, 0, EM[s] * 0.35);
+          continue;
+        }
+      }
+      if (hsh(col, row, (t * 2) | 0) % 19 === 0) putC(i, "-", 18 + fc[0] * fl * 0.15, 28 + fc[1] * fl * 0.15, 52 + fc[2] * fl * 0.15, -1, 0);
+    }
+  }
+  for (let col = 1; col < COLS; col += 3) putC(WL * COLS + col, ".", 255, 200, 120, 6, 0.3);   // promenade lamps
+  const fx = Math.floor(((ct * 2.4) % (COLS + 24)) - 12), frow = WL + 5;    // the Star Ferry
+  "._/====\\_.".split("").forEach((ch, j) => {
+    const c = fx + j;
+    if (c < 0 || c >= COLS) return;
+    const green = j === 1 || j === 8;
+    putC(frow * COLS + c, ch, green ? 120 : 240, green ? 255 : 235, green ? 150 : 210, 8, 0.3);
+    putC((frow + 1) * COLS + c, "~", 60, 72, 64, 7, 0.08);
+    if (j >= 3 && j <= 6) putC((frow - 1) * COLS + c, j === 3 ? "[" : j === 6 ? "]" : ":", 255, 214, 150, 8, 0.35);
+  });
+  const jx = Math.floor(COLS + 8 - ((ct * 1.5) % (COLS + 26))), jrow = WL + 11;   // a red-sailed junk going the other way
+  [["  |\\  |\\  ", 0], ["  |#\\ |#\\ ", 1], ["  |##\\|##\\", 2], ["\\=========/", 3]].forEach(([line, k]) => {
+    for (let j = 0; j < line.length; j++) {
+      const c = jx + j, ch = line[j];
+      if (ch === " " || c < 0 || c >= COLS || jrow - 3 + k >= WATER_END) continue;
+      const sail = ch === "#" || ch === "\\" && k < 3;
+      putC((jrow - 3 + k) * COLS + c, ch, sail ? 225 : k === 3 ? 120 : 200, sail ? 60 : k === 3 ? 90 : 180, sail ? 55 : k === 3 ? 70 : 160, 8, sail ? 0.25 : 0.1);
+    }
+  });
+  letters = 0;
+  for (let i = 0; i < N; i++) if (CHS[i] && CHS[i] !== " ") letters++;
+  const tt = `t ${t.toFixed(2).padStart(5, "0")}s`;
+  hudText(1, COLS - tt.length - 2, tt, "rgb(150,155,182)");
+  hudText(1, COLS - tt.length - 4, "●", "rgb(255,176,64)", 0.4);
+  hudText(ROWS - 6, 2, "victoria harbour · 22.29°N 114.17°E", "rgb(140,146,176)");
+  const sway = (FW.wind * 2).toFixed(2);
+  hudText(ROWS - 4, 2, `shells ${FW.shells}   sway ${FW.wind >= 0 ? "+" : ""}${sway}°   sparks ${FW.sparks.length}`, "rgb(96,102,132)");
+  hudText(ROWS - 3, 2, `letters ${letters.toLocaleString("en-US")}   ${ct < FINALE_T ? "tap the sky to launch a shell" : `happy birthday, ${NAME}!`}`, "rgb(96,102,132)");
+}
+
+// @phase fireworks ─ shells, bursts and falling sparks ─────────────────────
+const FINALE_T = 18, T_TEXT = 21.5;
+const FW = { rockets: [], sparks: [], smoke: [], next: 2.8, shells: 0, textP: [], textStarted: false, flash: 0, flashC: [255, 255, 255], wind: 0, big: 1 };
+const FW_PAL = [[255, 80, 110], [110, 170, 255], [120, 255, 170], [255, 205, 90], [210, 130, 255], [255, 150, 70], [90, 240, 240], [255, 130, 200], [240, 244, 255]];
+const KINDS = [["peony", 3], ["chrys", 2], ["willow", 1.6], ["ring", 1.1], ["saturn", 1], ["heart", 0.9], ["crackle", 1.2], ["strobe", 1], ["palm", 1], ["crossette", 0.8]];
+const KIND_SUM = KINDS.reduce((s, k) => s + k[1], 0);
+function resetFW() { Object.assign(FW, { rockets: [], sparks: [], smoke: [], next: 2.8, shells: 0, textP: [], textStarted: false, flash: 0, big: 1 }); }
+function cellAt(x, y) { const c = Math.floor(x), r = Math.floor(y); return c >= 0 && c < COLS && r >= 0 && r < WL ? r * COLS + c : -1; }
+function pickKind() { let r = Math.random() * KIND_SUM; for (const [k, w] of KINDS) if ((r -= w) <= 0) return k; return "peony"; }
+function pal() { return FW_PAL[(Math.random() * FW_PAL.length) | 0]; }
+function launch(x, ty, kind) {
+  const g = 24, h = Math.max(6, WL - ty);
+  FW.rockets.push({ x, y: WL - 0.5, vx: (Math.random() - 0.5) * 1.5, vy: -Math.sqrt(2 * g * h), g, kind: kind || pickKind(), big: FW.big });
+  FW.shells++;
+}
+function spark(o) { if (FW.sparks.length < 4200) FW.sparks.push(Object.assign({ age: 0, drag: 0.34, g: 5, tl: 0, z: 0, ph: Math.random() * 6.3 }, o)); }
+function burst(x, y, kind, scale = 1) {
+  const c = pal(), c2 = Math.random() < 0.5 ? [255, 250, 235] : pal();
+  const R = (12 + Math.random() * 5) * scale;
+  FW.flash = Math.min(0.7, FW.flash + 0.3 * scale); FW.flashC = c;
+  spark({ x, y, vx: 0, vy: 0, life: 0.16, c: [255, 252, 235], g: 0, kind: "flash" });
+  boom(scale);
+  for (let k = 0; k < 8; k++) FW.smoke.push({ x: x + (Math.random() - 0.5) * R * 0.9 * ASP, y: y + (Math.random() - 0.5) * R * 0.7, age: 0, life: 4 + Math.random() * 3 });
+  const rot = Math.random() * 6.283;
+  const sphere = (n, sp, o) => {                            // an even shell of stars (Fibonacci sphere)
+    for (let k = 0; k < n; k++) {
+      const z = 1 - (2 * (k + 0.5)) / n, a = k * 2.39996 + rot, r = Math.sqrt(1 - z * z), j = 0.9 + Math.random() * 0.1;
+      spark(Object.assign({ x, y, vx: r * Math.cos(a) * sp * j * ASP, vy: r * Math.sin(a) * sp * j, z, life: 1.5 + Math.random() * 0.6 }, o));
+    }
+  };
+  const ring = (n, sp, tilt, spin, o) => {
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * 6.283, px = Math.cos(a), py = Math.sin(a) * tilt;
+      spark(Object.assign({ x, y, vx: (px * Math.cos(spin) - py * Math.sin(spin)) * sp * ASP, vy: (px * Math.sin(spin) + py * Math.cos(spin)) * sp, z: Math.sin(a), life: 1.6 }, o));
+    }
+  };
+  if (kind === "peony") { sphere(200, R, { c, glitter: Math.random() < 0.4 }); if (Math.random() < 0.65) sphere(60, R * 0.42, { c: c2, life: 1.3 }); }
+  else if (kind === "chrys") { sphere(160, R, { c, tl: 5, life: 1.8, glitter: true }); sphere(40, R * 0.4, { c: c2, life: 1.2 }); }
+  else if (kind === "willow") sphere(120, R * 0.78, { c: [255, 196, 96], drag: 0.5, g: 6, tl: 9, life: 3.2 + Math.random() * 0.6, glitter: true });
+  else if (kind === "ring") { ring(80, R, 0.3 + Math.random() * 0.5, rot, { c }); ring(70, R * 0.7, 0.3 + Math.random() * 0.5, rot + 1.2, { c: c2 }); }
+  else if (kind === "saturn") { sphere(110, R * 0.55, { c }); ring(90, R, 0.28, rot * 0.3 - 0.15, { c: c2, life: 1.9 }); }
+  else if (kind === "heart") {
+    for (let k = 0; k < 110; k++) {
+      const a = (k / 110) * 6.283, hx = 16 * Math.sin(a) ** 3, hy = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+      spark({ x, y, vx: (hx / 16) * R * 0.85 * ASP, vy: (-hy / 16) * R * 0.85, z: Math.cos(a), c: [255, 80 + Math.random() * 70, 150], g: 1.5, drag: 0.28, life: 2 });
+    }
+    sphere(30, R * 0.25, { c: [255, 240, 245], life: 1.2 });
+  }
+  else if (kind === "crackle") sphere(150, R * 0.9, { c: [255, 214, 120], crackle: true });
+  else if (kind === "strobe") sphere(140, R * 0.85, { c: [235, 240, 255], strobe: true, life: 2.3 });
+  else if (kind === "palm") {
+    for (let arm = 0; arm < 8; arm++) {
+      const a = (arm / 8) * 6.283 + rot;
+      for (let j = 0; j < 12; j++) {
+        const sp = R * (0.45 + 0.55 * (j / 11));
+        spark({ x, y, vx: Math.cos(a) * sp * ASP, vy: Math.sin(a) * sp, z: Math.sin(a + 1), c: j > 9 ? [140, 255, 160] : [255, 200, 100], tl: 4, drag: 0.42, g: 6, life: 2 });
+      }
+    }
+  }
+  else sphere(24, R * 0.8, { c, life: 0.75, split: true });
+}
+function launchAt(col, row) {                               // a tap sends a shell to that spot
+  if (row >= WL - 4) row = WL - 10;
+  launch(clamp(col, 2, COLS - 3), Math.max(4, row));
+}
+function updateFireworks(ct, dt, t) {
+  FW.wind = 0.35 * Math.sin(ct * 0.21) + 0.15 * Math.sin(ct * 0.53 + 1);
+  if (ct >= FW.next && dt > 0 && ct > 2.8) {
+    const finale = ct >= FINALE_T && ct < T_TEXT - 0.3, after = ct >= T_TEXT;
+    FW.big = after ? 0.6 : finale ? 1.1 : 1;
+    const n = finale ? 1 : Math.random() < 0.3 ? 2 + (Math.random() < 0.3 ? 1 : 0) : 1;
+    for (let k = 0; k < n; k++) {
+      let x = 10 + Math.random() * 76, ty = 7 + Math.random() * 24;
+      if (after) { x = Math.random() < 0.5 ? 6 + Math.random() * 18 : 72 + Math.random() * 18; ty = 30 + Math.random() * 12; }
+      launch(x, ty);
+    }
+    FW.next = ct + (finale ? 0.07 + Math.random() * 0.08 : after ? 1.1 + Math.random() * 1.3 : 0.45 + Math.random() * 0.75);
+  }
+  FW.rockets = FW.rockets.filter((r) => {
+    r.vy += r.g * dt; r.x += (r.vx + Math.sin(ct * 13 + r.x) * 0.6) * dt; r.y += r.vy * dt;
+    if (dt > 0) for (let k = 0; k < 2; k++) spark({ x: r.x, y: r.y + 0.6, vx: (Math.random() - 0.5) * 2.5, vy: 2 + Math.random() * 3, life: 0.3 + Math.random() * 0.25, c: [255, 175, 85], g: 8, drag: 0.5 });
+    if (r.vy > -3) { burst(r.x, r.y, r.kind, r.big); return false; }
+    const i = cellAt(r.x, r.y);
+    if (i >= 0) putC(i, "|", 230, 210, 170, 6, 0.4);
+    return true;
+  });
+  FW.smoke = FW.smoke.filter((s) => {                       // drifting smoke, lit by the next burst
+    s.age += dt; s.x += FW.wind * 2 * dt; s.y -= 0.25 * dt;
+    if (s.age >= s.life) return false;
+    const a = Math.sin((Math.PI * s.age) / s.life) * 0.5, i = cellAt(s.x, s.y);
+    if (i >= 0) putC(i, ":", 34 + FW.flashC[0] * FW.flash * a, 34 + FW.flashC[1] * FW.flash * a, 46 + FW.flashC[2] * FW.flash * a, 3, 0);
+    return true;
+  });
+  const keep = [];
+  for (const p of FW.sparks) {
+    p.age += dt;
+    if (p.age >= p.life) {
+      if (p.split) for (let k = 0; k < 4; k++) { const a = k * 1.571 + Math.random() * 0.4; spark({ x: p.x, y: p.y, vx: Math.cos(a) * 6 * ASP, vy: Math.sin(a) * 6, c: p.c, life: 0.7 }); }
+      if (p.crackle) spark({ x: p.x + (Math.random() - 0.5) * 2, y: p.y + (Math.random() - 0.5), vx: 0, vy: 0, life: 0.12, c: [255, 255, 255], g: 0, kind: "flash" });
+      continue;
+    }
+    const k = Math.pow(p.drag, dt);
+    p.vx = p.vx * k + FW.wind * dt * ASP; p.vy = p.vy * k + p.g * dt;
+    if (p.tl && dt > 0) { (p.trail || (p.trail = [])).push(p.x, p.y); if (p.trail.length > p.tl * 2) p.trail.splice(0, 2); }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    keep.push(p);
+    const f = 1 - p.age / p.life;
+    let b = Math.pow(f, 1.1) * (0.7 + 0.3 * p.z);            // stars on the near side of the shell glow brighter
+    let white = clamp(1 - p.age / 0.15, 0, 1) * 0.7;
+    if (p.strobe && f < 0.75) { if (Math.sin(t * 38 + p.ph * 7) < 0.2) continue; white = 1; b = Math.max(b, 0.6); }
+    if (p.glitter && f < 0.35) { if (Math.random() < 0.55) continue; white = 0.8; }
+    if ((p.crackle || f < 0.25) && Math.random() < 0.3) b *= 0.35;
+    const m = 0.22 + 0.5 * b;                                // overall spark brightness
+    const cr = (p.c[0] + (255 - p.c[0]) * white) * m, cg = (p.c[1] + (255 - p.c[1]) * white) * m, cb = (p.c[2] + (255 - p.c[2]) * white) * m;
+    const i = cellAt(p.x, p.y);
+    if (i >= 0) putC(i, p.kind === "flash" ? "@" : p.glitter && f < 0.35 ? "+" : ".:+*#%@"[clamp(Math.floor(b * 6.99), 0, 6)], cr, cg, cb, 5 + b, 0.12 + 0.33 * b);
+    if (p.trail) for (let j = 0; j < p.trail.length; j += 2) {
+      const tb = ((j / 2 + 1) / (p.tl + 1)) * 0.65, ti = cellAt(p.trail[j], p.trail[j + 1]);
+      if (ti >= 0) putC(ti, tb > 0.3 ? ":" : ".", cr * tb, cg * tb, cb * tb, 4 + tb * b, tb * b * 0.3);
+    }
+  }
+  FW.sparks = keep;
+}
+
+// @phase finale ─ the last salvo writes the name in the sky ─────────────────
+const TEXT_TOP = 3;
+let TEXT_TARGETS = null;
+function textTargets() {
+  if (TEXT_TARGETS) return TEXT_TARGETS;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = 32 * CH;
+  const g = c.getContext("2d"), mono = getComputedStyle(document.documentElement).getPropertyValue("--mono");
+  g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle";
+  for (const [str, size, y] of [["HAPPY", 92, 62], ["BIRTHDAY", 92, 166], [NAME, 120, 290]]) {
+    g.font = `700 ${size}px ${mono}`;
+    const w = g.measureText(str).width;
+    g.font = `700 ${w > W * 0.9 ? (size * W * 0.9) / w : size}px ${mono}`;
+    g.fillText(str, W / 2, y);
+  }
+  const data = g.getImageData(0, 0, c.width, c.height).data;
+  TEXT_TARGETS = [];
+  for (let row = 0; row < 32; row++)
+    for (let col = 0; col < COLS; col++)
+      if (data[(Math.floor((row + 0.5) * CH) * c.width + Math.floor((col + 0.5) * CW)) * 4 + 3] > 110) TEXT_TARGETS.push([col, row + TEXT_TOP]);
+  return TEXT_TARGETS;
+}
+function drawTextParticles(ct, t) {
+  if (ct < T_TEXT) return;
+  const sx = COLS / 2, sy = 18;
+  if (!FW.textStarted) {                                    // one big burst flings every spark to its letter
+    burst(sx, sy, "willow", 1); burst(sx - 24, sy + 4, "chrys", 0.8); burst(sx + 24, sy + 4, "chrys", 0.8);
+    FW.textStarted = true;
+    FW.textP = textTargets().map(([tx, ty]) => {
+      const a = Math.random() * 6.283, s = 8 + Math.random() * 18;
+      return { tx, ty, cx: sx + Math.cos(a) * s * ASP, cy: sy + Math.sin(a) * s, d: Math.random() * 0.35, ph: Math.random() * 6.3, sp: 1 + Math.random() * 2.5 };
+    });
+  }
+  for (const p of FW.textP) {
+    const u = clamp((ct - T_TEXT - p.d) / 1.6, 0, 1);
+    if (u <= 0) continue;
+    const e = 1 - Math.pow(1 - u, 3);
+    const x = (1 - e) * (1 - e) * sx + 2 * (1 - e) * e * p.cx + e * e * (p.tx + 0.5);
+    const y = (1 - e) * (1 - e) * sy + 2 * (1 - e) * e * p.cy + e * e * (p.ty + 0.5);
+    const tw = u < 1 ? 1 : 0.8 + 0.2 * Math.sin(t * p.sp + p.ph);
+    const i = cellAt(x, y);
+    if (i < 0) continue;
+    if (Math.sin(t * p.sp * 1.7 + p.ph * 3) > 0.93) { putC(i, "*", 255, 236, 170, 7, 0.6); continue; }
+    const [r, g, b] = hsv((p.tx / COLS * 0.8 + t * 0.05) % 1, 0.35, 1);
+    putC(i, tw > 0.9 ? "@" : "#", r * tw * 0.9, g * tw * 0.9, b * tw * 0.9, 7, 0.45 * tw);
+  }
+}
+
+// @phase music ─ a little music box plays the birthday song ────────────────
+const SONG = [                                   // [note, beats] — 3/4 with a one-beat pickup
+  ["G4", 0.75], ["G4", 0.25], ["A4", 1], ["G4", 1], ["C5", 1], ["B4", 2],
+  ["G4", 0.75], ["G4", 0.25], ["A4", 1], ["G4", 1], ["D5", 1], ["C5", 2],
+  ["G4", 0.75], ["G4", 0.25], ["G5", 1], ["E5", 1], ["C5", 1], ["B4", 1], ["A4", 2],
+  ["F5", 0.75], ["F5", 0.25], ["E5", 1], ["C5", 1], ["D5", 1], ["C5", 2],
+];
+const CHORDS = [                                 // oom-pah-pah: bass on 1, chord on 2 and 3
+  ["C3", ["E3", "G3"]], ["G2", ["B2", "F3"]], ["G2", ["B2", "F3"]], ["C3", ["E3", "G3"]],
+  ["C3", ["E3", "A#3"]], ["F2", ["A2", "C3"]], ["C3", ["E3", "G3"]], ["G2", ["B2", "F3"]],
+];
+const BEAT = 0.5;
+let AC = null, master = null, musicWanted = false, nextLoopAt = 0, loopTimer = 0;
+function freq(n) {
+  const m = /^([A-G])(#?)(\d)$/.exec(n);
+  const semi = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0);
+  return 440 * 2 ** ((semi + (+m[3] + 1) * 12 - 69) / 12);
+}
+function tone(f, at, dur, vol, type) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(vol, at + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0008, at + dur);
+  o.connect(g); g.connect(master);
+  o.start(at); o.stop(at + dur + 0.05);
+}
+function bell(f, at, dur, vol) {                 // music-box tine: fundamental plus a few bright partials
+  tone(f, at, dur, vol, "triangle");
+  tone(f * 2, at, dur * 0.6, vol * 0.25, "sine");
+  tone(f * 3.01, at, dur * 0.3, vol * 0.06, "sine");
+}
+function scheduleSong(at) {
+  let b = 0;
+  for (const [n, len] of SONG) { bell(freq(n), at + b * BEAT, Math.max(0.6, len * BEAT * 1.6), 0.2); b += len; }
+  CHORDS.forEach(([root, upper], m) => {
+    const s = at + (1 + m * 3) * BEAT;
+    tone(freq(root), s, BEAT * 1.4, 0.14, "sine");
+    for (const k of [1, 2]) for (const u of upper) tone(freq(u), s + k * BEAT, BEAT * 0.8, 0.04, "triangle");
+  });
+  return at + b * BEAT + 1.5;                    // a short breath, then it plays again
+}
+function boom(scale) {                           // a soft thump for each burst while the music is on
+  if (!AC || AC.state !== "running") return;
+  const len = 0.7, buf = AC.createBuffer(1, AC.sampleRate * len, AC.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = buf; lp.type = "lowpass"; lp.frequency.value = 380; g.gain.value = 0.09 * scale;
+  src.connect(lp); lp.connect(g); g.connect(master);
+  src.start(AC.currentTime + 0.02);
+}
+function startMusic() {
+  if (!AC) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    AC = new Ctx();
+    master = AC.createGain(); master.gain.value = 0.6;
+    const echo = AC.createDelay(), fb = AC.createGain(), wet = AC.createGain();
+    echo.delayTime.value = 0.23; fb.gain.value = 0.22; wet.gain.value = 0.25;
+    master.connect(AC.destination); master.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(AC.destination);
+    nextLoopAt = scheduleSong(AC.currentTime + 0.15);
+    loopTimer = setInterval(() => { if (AC.state === "running" && AC.currentTime > nextLoopAt - 2) nextLoopAt = scheduleSong(nextLoopAt); }, 400);
+  }
+  AC.resume();
+  return true;
+}
+function setMusic(on) {
+  musicWanted = on;
+  if (on) { if (!startMusic()) musicWanted = false; }
+  else if (AC) AC.suspend();
+  const btn = document.getElementById("btnMusic");
+  btn.textContent = musicWanted ? "♪ 노래 끄기" : "♪ 노래 켜기";
+  btn.setAttribute("aria-pressed", String(musicWanted));
+}
+
+// @phase paint ─ characters, then a soft bloom on top ──────────────────────
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+const glow = document.createElement("canvas"), gctx = glow.getContext("2d");
+const glow2 = document.createElement("canvas"), g2ctx = glow2.getContext("2d");
+const W = COLS * CW, Hh = ROWS * CH;
+let dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = W * dpr; canvas.height = Hh * dpr;
+  glow.width = W / 4; glow.height = Hh / 4;
+  glow2.width = W / 10; glow2.height = Hh / 10;
+}
+resize();
+window.addEventListener("resize", resize);
+
+function paint(t, offY, fade, city) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sky = ctx.createLinearGradient(0, 0, 0, Hh);
+  if (city) {
+    sky.addColorStop(0, "#03040a"); sky.addColorStop(0.5, "#0b0a1c"); sky.addColorStop(WL / ROWS, "#1c1434");
+    sky.addColorStop(WL / ROWS + 0.01, "#05070e"); sky.addColorStop(1, "#04050a");
+  } else { sky.addColorStop(0, "#05060c"); sky.addColorStop(0.55, "#0a0d1a"); sky.addColorStop(1, "#06070c"); }
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, Hh);
+  if (city && FW.flash > 0.01) {                             // each burst lights the whole sky for a moment
+    const [fr, fg, fb] = FW.flashC;
+    ctx.fillStyle = `rgba(${fr},${fg},${fb},${0.08 * FW.flash})`; ctx.fillRect(0, 0, W, WL * CH);
+    ctx.fillStyle = `rgba(${fr},${fg},${fb},${0.03 * FW.flash})`; ctx.fillRect(0, WL * CH, W, (WATER_END - WL) * CH);
+  }
+  const lit = city ? 0 : litCount(t);
+  if (lit) {                                                  // warm pool of candle light
+    const gx = CX * CW, gy = (CY - (TOP_Y * 0.55) * CP * S) * CH;
+    const g = ctx.createRadialGradient(gx, gy, 10, gx, gy, W * 0.62);
+    const k = (lit / NC) * 0.22;
+    g.addColorStop(0, `rgba(255,150,60,${k})`); g.addColorStop(0.5, `rgba(255,120,40,${k * 0.35})`); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, offY * dpr);           // the camera slide between scenes
+  ctx.font = `${CH * 0.95}px ${getComputedStyle(document.documentElement).getPropertyValue("--mono")}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  gctx.setTransform(1, 0, 0, 1, 0, 0);
+  gctx.clearRect(0, 0, glow.width, glow.height);
+  let last = "";
+  for (let i = 0; i < N; i++) {
+    const ch = CHS[i];
+    if (!ch || ch === " ") continue;
+    const sty = STY[i];
+    if (sty !== last) { ctx.fillStyle = sty; last = sty; }
+    const col = i % COLS, row = (i / COLS) | 0;
+    ctx.fillText(ch, (col + 0.5) * CW, (row + 0.5) * CH);
+    const e = EM[i];
+    if (e > 0.02) {
+      gctx.globalAlpha = Math.min(1, e);
+      gctx.fillStyle = sty;
+      gctx.fillRect(col * CW / 4, row * CH / 4, CW / 4, CH / 4);
+    }
+  }
+  gctx.globalAlpha = 1;
+  g2ctx.clearRect(0, 0, glow2.width, glow2.height);
+  g2ctx.drawImage(glow, 0, 0, glow2.width, glow2.height);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.imageSmoothingEnabled = true;
+  ctx.globalAlpha = 0.55; ctx.drawImage(glow, 0, 0, W, Hh);
+  ctx.globalAlpha = 0.65; ctx.drawImage(glow2, 0, 0, W, Hh);
+  for (const [fx, fy] of flames) {                            // halo round each flame
+    const x = fx * CW, y = fy * CH, g = ctx.createRadialGradient(x, y, 1, x, y, CH * 3.2);
+    g.addColorStop(0, "rgba(255,200,110,0.35)"); g.addColorStop(1, "rgba(255,120,40,0)");
+    ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(x - CH * 3.2, y - CH * 3.2, CH * 6.4, CH * 6.4);
+  }
+  ctx.restore();
+  if (titleGlyphs.length) {                                  // big glowing title
+    ctx.save();
+    ctx.font = `700 ${CH * 1.75}px ${getComputedStyle(document.documentElement).getPropertyValue("--mono")}`;
+    ctx.shadowBlur = 12;
+    for (const [ch, x, y, sty, pop] of titleGlyphs) {
+      ctx.globalAlpha = pop; ctx.fillStyle = sty; ctx.shadowColor = sty;
+      ctx.fillText(ch, x, y);
+    }
+    ctx.restore();
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const vig = ctx.createRadialGradient(W / 2, Hh * 0.45, Hh * 0.3, W / 2, Hh * 0.45, Hh * 0.75);
+  vig.addColorStop(0, "rgba(0,0,0,0)"); vig.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, Hh);
+  if (fade > 0) { ctx.fillStyle = `rgba(3,4,8,${fade})`; ctx.fillRect(0, 0, W, Hh); }
+}
+
+// @phase loop ─ 30 fps, pause and replay ───────────────────────────────────
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let t = reduce ? T_DONE : 0, lastNow = performance.now(), paused = false, fps = 30, statusAt = 0;
+let scene = "cake", cityT0 = 0, hintText = "";
+const hintEl = document.getElementById("hint");
+const statusEl = document.getElementById("status");
+function tick(now) {
+  requestAnimationFrame(tick);
+  const real = (now - lastNow) / 1000;
+  if (real < 1 / 31) return;
+  lastNow = now;
+  const dt = Math.min(0.1, real);
+  fps = fps * 0.9 + 0.1 / Math.max(real, 1e-3);
+  if (!paused) t += dt;
+  const d = paused ? 0 : dt;
+  if (scene === "cake" && blowT >= 0 && t >= transAt() + TRANS_DUR) startCity();
+  if (scene === "cake") {
+    drawFrame(t, d);
+    const k = blowT >= 0 ? clamp((t - transAt()) / TRANS_DUR, 0, 1) : 0;
+    paint(t, k * k * Hh * 0.3, k, false);
+  } else {
+    const ct = t - cityT0, k = clamp(ct / 1.4, 0, 1);
+    drawCity(ct, d, t);
+    paint(t, -(1 - k) * (1 - k) * Hh * 0.25, 1 - k, true);
+  }
+  updateCode(t);
+  updateHint();
+  if (now - statusAt > 500) {
+    statusAt = now;
+    statusEl.textContent = paused ? "● paused" : `● running · ${Math.round(Math.min(30, fps))} fps`;
+  }
+}
+function setPaused(p) {
+  paused = p; document.getElementById("btnPause").textContent = p ? "Play" : "Pause"; statusAt = 0;
+  if (AC && musicWanted) p ? AC.suspend() : AC.resume();
+}
+function startCity() { scene = "city"; cityT0 = t; parts = []; resetFW(); }
+function replay() {
+  t = 0; parts = []; litDone = new Set(); puffed = new Set(); blowT = -1; scene = "cake"; resetFW();
+  confetti.forEach((c, k) => Object.assign(c, newConfetti(true, k)));
+  setPaused(false);
+}
+function updateHint() {
+  const s = scene === "city" ? "Tap the sky to launch fireworks · Space pause · R replay"
+    : blowT < 0 && t >= T_DONE ? "Tap the cake to blow out the candles · Space pause · R replay"
+    : "Tap to pause · Space pause · R replay";
+  if (s !== hintText) { hintText = s; hintEl.textContent = s; }
+}
+canvas.addEventListener("click", (e) => {
+  if (scene === "city") {
+    const r = canvas.getBoundingClientRect();
+    launchAt(((e.clientX - r.left) / r.width) * COLS, ((e.clientY - r.top) / r.height) * ROWS);
+    if (paused) setPaused(false);
+  } else if (blowT < 0 && t >= T_DONE) {
+    blowT = t;
+    if (paused) setPaused(false);
+  } else if (blowT < 0) setPaused(!paused);
+});
+document.getElementById("btnPause").addEventListener("click", () => setPaused(!paused));
+document.getElementById("btnReplay").addEventListener("click", replay);
+document.getElementById("btnMusic").addEventListener("click", () => setMusic(!musicWanted));
+let musicTouched = false;
+window.addEventListener("pointerdown", (e) => {        // browsers only allow sound after a tap, so start on the first one
+  if (musicTouched) return;
+  musicTouched = true;
+  if (!e.target.closest("#btnMusic")) setMusic(true);
+}, { once: false });
+window.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("button, input, summary")) return;
+  if (e.code === "Space") { e.preventDefault(); setPaused(!paused); }
+  else if (e.key === "r" || e.key === "R") replay();
+});
+
+// code panel: show this very script, following the step being drawn
+const codeLines = SOURCE.replace(/^\n/, "").split("\n");
+const phaseAt = {};
+codeLines.forEach((ln, i) => { const m = /\/\/ @phase (\w+)/.exec(ln); if (m) phaseAt[m[1]] = i; });
+const order = Object.keys(phaseAt).sort((a, b) => phaseAt[a] - phaseAt[b]);
+const phaseEnd = {};
+order.forEach((p, k) => { phaseEnd[p] = k + 1 < order.length ? phaseAt[order[k + 1]] : codeLines.length; });
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function highlight(line) {
+  const re = /(\/\/.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)|(\b\d+(?:\.\d+)?\b)|(\b(?:const|let|var|function|return|for|if|else|while|of|in|new|break|continue|true|false|null)\b)|(\b[A-Za-z_$][\w$]*(?=\())/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "n" : m[4] ? "k" : "f";
+    out += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = re.lastIndex;
+  }
+  return out + esc(line.slice(last));
+}
+const inner = document.getElementById("codeInner");
+inner.innerHTML = codeLines.map((ln, i) => `<div class="ln"><span class="no">${i + 1}</span><span class="tx">${highlight(ln) || " "}</span></div>`).join("");
+const lineEls = inner.children;
+let curLine = -1;
+function phaseOf(t) {
+  if (scene === "city") {
+    const ct = t - cityT0;
+    if (ct < 2.6) return ["city", ct / 2.6];
+    if (ct >= FINALE_T && ct < T_TEXT + 4) return ct < T_TEXT ? ["fireworks", (ct - FINALE_T) / (T_TEXT - FINALE_T)] : ["finale", (ct - T_TEXT) / 4];
+    return ["fireworks", (ct * 0.12) % 1];
+  }
+  if (blowT >= 0) return ["blow", (t - blowT) / (transAt() + TRANS_DUR - blowT)];
+  if (t < T_SCAN) return ["setup", t / T_SCAN];
+  if (t < T_DEC) return ["tiers", (t - T_SCAN) / (T_DEC - T_SCAN)];
+  if (t < T_CANDLE) return ["decor", (t - T_DEC) / (T_CANDLE - T_DEC)];
+  if (t < T_TITLE) return ["candles", (t - T_CANDLE) / (T_TITLE - T_CANDLE)];
+  if (t < T_DONE + 1.5) return ["light", (t - T_TITLE) / (T_DONE + 1.5 - T_TITLE)];
+  return ["render", ((t - T_DONE) * 0.12) % 1];
+}
+function updateCode(t) {
+  const [p, f] = phaseOf(t);
+  const a = phaseAt[p], b = phaseEnd[p];
+  const line = Math.min(b - 1, a + Math.floor(clamp(f, 0, 0.999) * (b - a)));
+  if (line === curLine) return;
+  if (curLine >= 0) lineEls[curLine].classList.remove("cur");
+  lineEls[line].classList.add("cur");
+  curLine = line;
+  const lh = lineEls[0].offsetHeight || 17;
+  inner.style.transform = `translateY(${-Math.max(0, line - 6) * lh}px)`;
+}
+
+// share: a QR code and a copy button for the friend's phone
+const OWN_PAGE = window.self === window.top && /^https?:$/.test(location.protocol);
+const SHARE_URL = (OWN_PAGE ? location.origin + location.pathname : "https://claude.ai/artifact/N7ExehxpUNrEKinYj3Ji6Q") + (NAME !== "SH" ? "#" + NAME : "");
+document.getElementById("greetName").textContent = NAME;
+const urlEl = document.getElementById("shareUrl"), qrEl = document.getElementById("qr"), copyBtn = document.getElementById("btnCopy");
+urlEl.value = SHARE_URL;
+try {
+  if (window.QRCode) new QRCode(qrEl, { text: SHARE_URL, width: 256, height: 256, colorDark: "#3b2342", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  else qrEl.hidden = true;
+} catch (e) { qrEl.hidden = true; }
+copyBtn.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(SHARE_URL); copyBtn.textContent = "복사됐어요!"; }
+  catch (e) { urlEl.focus(); urlEl.select(); copyBtn.textContent = "선택됨 · 복사하세요"; }
+  setTimeout(() => (copyBtn.textContent = "링크 복사"), 1800);
+});
+
+window.cakeSeek = (s) => { t = s; };   // lets you jump to a moment from the console
+window.cakeBlow = () => { if (blowT < 0) blowT = t; };
+requestAnimationFrame(tick);
+})();
+</script>
