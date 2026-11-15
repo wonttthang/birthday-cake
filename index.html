@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta property="og:title" content="생일 축하해, SH!">
+<meta property="og:title" content="생일 축하해, 소헌!">
 <meta property="og:description" content="케이크가 다 만들어지면 터치해서 촛불을 꺼 주세요.">
 <title>SH's Birthday Cake</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -94,6 +94,7 @@
   }
   .tabbar .file { border-bottom: 2px solid #4a7dff; padding-bottom: 3px; }
   .tabbar .status { color: var(--amber); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .code[hidden] { display: none; }
   .code { position: relative; height: calc(12 * 1.55em); overflow: hidden; font-family: var(--mono); font-size: clamp(9.5px, 2.5vw, 11.5px); line-height: 1.55; min-width: 0; }
   .code .inner { transition: transform .35s ease; will-change: transform; }
   .code .ln { display: flex; gap: 14px; padding: 0 14px; white-space: pre; overflow: hidden; }
@@ -162,7 +163,7 @@
 <div class="wrap">
   <header class="greet">
     <span class="eyebrow">made with code · just for you</span>
-    <h1>생일 축하해, <span class="name" id="greetName">SH</span>!</h1>
+    <h1>생일 축하해, <span class="name" id="greetName">소헌</span>!</h1>
     <p>케이크가 다 만들어지면 터치해서 촛불을 꺼 주세요.</p>
   </header>
   <div class="card">
@@ -171,7 +172,7 @@
       <span class="file">birthday_cake.js</span>
       <span class="status" id="status">● running · 30 fps</span>
     </div>
-    <div class="code" id="code"><div class="inner" id="codeInner"></div></div>
+    <div class="code" id="code" hidden><div class="inner" id="codeInner"></div></div>
   </div>
   <div class="controls">
     <button id="btnPause" type="button">Pause</button>
@@ -1418,6 +1419,7 @@ function phaseOf(t) {
   return ["render", ((t - T_DONE) * 0.12) % 1];
 }
 function updateCode(t) {
+  if (document.getElementById("code").hidden) return;     // the code panel is switched off
   const [p, f] = phaseOf(t);
   const a = phaseAt[p], b = phaseEnd[p];
   const line = Math.min(b - 1, a + Math.floor(clamp(f, 0, 0.999) * (b - a)));
@@ -1432,7 +1434,7 @@ function updateCode(t) {
 // share: a QR code and a copy button for the friend's phone
 const OWN_PAGE = window.self === window.top && /^https?:$/.test(location.protocol);
 const SHARE_URL = (OWN_PAGE ? location.origin + location.pathname : "https://claude.ai/artifact/N7ExehxpUNrEKinYj3Ji6Q") + (NAME !== "SH" ? "#" + NAME : "");
-document.getElementById("greetName").textContent = NAME;
+document.getElementById("greetName").textContent = NAME === "SH" ? "소헌" : NAME;   // the greeting uses the Korean name
 const urlEl = document.getElementById("shareUrl"), qrEl = document.getElementById("qr"), copyBtn = document.getElementById("btnCopy");
 urlEl.value = SHARE_URL;
 try {
